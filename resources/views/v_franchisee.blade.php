@@ -504,11 +504,16 @@
                         <div class="info-label">Alamat:</div>
                         <div class="info-value">{{ $data->alamat_usaha ?? 'Jl. Pejuan 45' }}</div>
                     </div>
-                    <div class="info-row">
-                        <div class="info-label">Status:</div>
-                        <div class="info-value">{{ $data->status ?? '-' }}</div>
+                   <div class="info-row">
+                        <div class="info-label">Kode Kasir:</div>
+                        <div class="info-value">
+                            {{
+                                optional($kasir->where('id_franchise', $data->id_franchise)->first())->id_kasir
+                                ?? '-'
+                            }}
+                        </div>
                     </div>
-                    <button class="btn" onclick="showDetail('{{ $data->id_franchise }}')">
+                                        <button class="btn" onclick="showDetail('{{ $data->id_franchise }}')">
                         <i class="fas fa-info-circle"></i> Lihat Detail
                     </button>
                 </div>

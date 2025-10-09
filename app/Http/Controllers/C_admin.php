@@ -156,43 +156,46 @@ class C_admin extends Controller
     }
 
 
-    public function indexfranchise()
-    {
-        $user = Session::get('user');
-        if (!$user || !isset($user['id_akun'])) {
-            return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
-        }
-        $id_akun = Session::get('user')['id_akun'];
-
-        // Cek apakah user sudah punya mitra
-        $id_mitra = DB::table('tb_mitra')
-                        ->select('id_mitra')
-                        ->where('id_akun', $id_akun)
-                        ->first();
-
-        // Jika belum daftar mitra, redirect kembali dengan notifikasi
-        if (!$id_mitra) {
-            return redirect()->back()->with('error', 'Silahkan daftar mitra dulu atau cek status pendaftaran dulu ya');
-        }
-
-        // Ambil data franchise berdasarkan id_mitra
-        $franchise = DB::table('tb_franchise')
-                        ->where('id_mitra', $id_mitra->id_mitra)
-                        ->get();
-
-        // Ambil satu data foto
-        $foto = DB::table('tb_franchise')
-                    ->select('lokasi_usaha')
-                    ->where('id_mitra', $id_mitra->id_mitra)
-                    ->get();
-
-        // Ambil profil mitra
-        $profile = DB::table('tb_mitra')
-                        ->where('id_akun', $id_akun)
-                        ->first();
-
-        return view('v_franchisee', compact('franchise', 'foto', 'profile'));
+public function indexfranchise()
+{
+    $user = Session::get('user');
+    if (!$user || !isset($user['id_akun'])) {
+        return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
     }
+
+    $id_akun = $user['id_akun'];
+
+    // Ambil id_mitra dari akun login
+    $id_mitra = DB::table('tb_mitra')
+        ->select('id_mitra')
+        ->where('id_akun', $id_akun)
+        ->first();
+
+    if (!$id_mitra) {
+        return redirect()->back()->with('error', 'Silahkan daftar mitra dulu atau cek status pendaftaran dulu ya');
+    }
+
+    // ✅ Ambil semua franchise milik mitra (disimpan ke $franchise)
+    $franchise = DB::table('tb_franchise')
+        ->where('id_mitra', $id_mitra->id_mitra)
+        ->get();
+
+    // Ambil semua id_franchise milik mitra login
+    $id_franchise_list = $franchise->pluck('id_franchise');
+
+    // Ambil semua kasir yang terkait dengan franchise-franchise tersebut
+    $kasir = DB::table('tb_kasir')
+        ->whereIn('id_franchise', $id_franchise_list)
+        ->get();
+
+    // Ambil profil mitra
+    $profile = DB::table('tb_mitra')
+        ->where('id_akun', $id_akun)
+        ->first();
+
+    // Kirim ke view
+    return view('v_franchisee', compact('franchise', 'profile', 'kasir'));
+}
 
     public function index1(Request $request)
     {

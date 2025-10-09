@@ -501,6 +501,87 @@
         #qr-modal.show {
             display: flex; /* hanya tampil kalau ada class "show" */
         }
+
+        /* === Modal Scanner QR === */
+#qr-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(3px);
+    transition: opacity 0.3s ease;
+}
+
+#qr-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.qr-scan-box {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.25);
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+    animation: fadeInUp 0.3s ease;
+}
+
+.qr-scan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.qr-scan-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1B5E20;
+}
+
+.qr-scan-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.qr-scan-close:hover {
+    color: #1B5E20;
+}
+
+/* Area kamera */
+#reader {
+    width: 100%;
+    height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #1B5E20;
+}
+
+/* Loading indicator */
+.loading-text {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+/* Animasi masuk modal */
+@keyframes fadeInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
     </style>
 </head>
 <body>
@@ -594,7 +675,7 @@
                                 </a>
                             </div>
                         </div>
-                        
+                       
 
                 @empty
                 <div class="empty-state">
@@ -630,12 +711,18 @@
             </div>
         </div>
         
-        <!-- Modal QR -->
-        <div id="qr-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
-            <div class="bg-white p-4 rounded-lg shadow-lg">
-                <div id="reader" style="width: 300px; height: 300px;"></div>
+       <!-- Modal Scanner QR -->
+        <div id="qr-modal">
+            <div class="qr-scan-box">
+                <div class="qr-scan-header">
+                    <h2>🔍 Pindai QR Code</h2>
+                    <button class="qr-scan-close" id="closeQrScanner">&times;</button>
+                </div>
+                <div id="reader"></div>
+                <div class="loading-text">Pastikan kamera menghadap kode QR...</div>
             </div>
         </div>
+
         <!-- Modal untuk Tambah/Edit -->
         <div class="modal" id="qrModal">
             <div class="modal-content">
@@ -689,6 +776,11 @@
         document.getElementById('uuid').value = randomId;
         document.getElementById('uuidDisplay').value = randomId;
     });
+    
+    document.getElementById('closeQrScanner').addEventListener('click', () => {
+    stopQrScanner();
+});
+
 
     // --- Modal Scanner ---
     let html5QrCode;
