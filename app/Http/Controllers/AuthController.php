@@ -22,6 +22,7 @@ class AuthController extends Controller
             ->where('username', $request->username)
             ->orWhere('email', $request->username)
             ->first();
+        
 
         // Cek apakah akun ditemukan
         if (!$user) {
@@ -31,6 +32,18 @@ class AuthController extends Controller
         // Cek password
         if (!Hash::check($request->password, $user->password)) {
             return back()->with('error', 'Password salah');
+        }
+        
+        if ($user->type_akun == 'kasir'){
+            $statuslangganan = DB::table('tb_kasir')
+                ->leftJoin('tb_franchise', 'tb_kasir.id_franchise', '=', 'tb_franchise.id_franchise')
+                ->where('tb_kasir.id_akun', $user->id_akun)
+                ->select('tb_franchise.langganan')
+                ->first();
+                
+            if ($statuslangganan->langganan == 'Tidak Berlangganan'){
+                return back()->with('error', 'Silahkan Berlangganan Terlebih Dahulu Untuk Menggunakan Fitur Kasir!');
+            }
         }
 
         Session::put('user', [

@@ -187,7 +187,8 @@ public function indexfranchise()
     $kasir = DB::table('tb_kasir')
         ->whereIn('id_franchise', $id_franchise_list)
         ->get();
-
+        
+    
     // Ambil profil mitra
     $profile = DB::table('tb_mitra')
         ->where('id_akun', $id_akun)
