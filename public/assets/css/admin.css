@@ -1,0 +1,23 @@
+.card {
+  @apply bg-white rounded-2xl shadow-lg transition-shadow duration-300 transform hover:-translate-y-1 hover:shadow-2xl p-6;
+}
+
+.card-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.card-title {
+  @apply text-xl font-semibold text-green-900;
+}
+
+.card-icon {
+  @apply text-green-700 bg-green-100 p-2 rounded-full text-xl;
+}
+
+.card-body {
+  @apply h-40 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 animate-pulse;
+}
+
+.card-text {
+  @apply text-sm text-gray-600 mt-4;
+}
