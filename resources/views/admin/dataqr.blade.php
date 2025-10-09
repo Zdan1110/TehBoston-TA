@@ -594,6 +594,7 @@
                                 </a>
                             </div>
                         </div>
+                        
 
                 @empty
                 <div class="empty-state">
