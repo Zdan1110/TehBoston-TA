@@ -256,19 +256,46 @@
         }
         
         .qr-image {
-            grid-column: 1 / -1;
-            text-align: center;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border-color);
-        }
-        
-        .qr-image img {
-            max-width: 120px;
-            height: auto;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+    text-align: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.qr-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.qr-wrapper img {
+    max-width: 140px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-download {
+    background-color: var(--primary-dark);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-download:hover {
+    background-color: #256d26;
+    transform: translateY(-2px);
+}
+
         
         /* Empty State */
         .empty-state {
@@ -559,10 +586,15 @@
                         </div>
 
                         <div class="qr-image">
-                            <img src="{{ asset('uploads/qrcode/' . $qr->qr_img) }}" alt="QR Image">
+                            <div class="qr-wrapper">
+                                <img src="{{ asset('uploads/qrcode/' . $qr->qr_img) }}" alt="QR Image">
+                                <a href="{{ route('admin.dataqr.download', $qr->id_qr) }}" 
+                                class="btn-download">
+                                    <i class="fas fa-download"></i> Download QR
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                </div>
+
                 @empty
                 <div class="empty-state">
                     <i class="fas fa-qrcode"></i>
@@ -747,5 +779,50 @@
             });
         });
     </script>
+
+    <script>
+document.querySelectorAll('.download-qr').forEach(button => {
+    button.addEventListener('click', async function() {
+        const qrId = this.getAttribute('data-id');
+        const imgElement = document.getElementById(`qr-img-${qrId}`);
+        const imgSrc = imgElement.src;
+        
+        try {
+            const image = await fetch(imgSrc);
+            const blob = await image.blob();
+            const bitmap = await createImageBitmap(blob);
+
+            // Buat canvas 4K (misal 2000x2000px)
+            const canvas = document.createElement('canvas');
+            const size = 2000;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Hapus background jadi transparan
+            ctx.clearRect(0, 0, size, size);
+            
+            // Gambar ulang QR di tengah
+            const scale = size / bitmap.width;
+            ctx.drawImage(bitmap, 0, 0, bitmap.width * scale, bitmap.height * scale);
+
+            // Konversi ke PNG transparan
+            const url = canvas.toDataURL('image/png');
+
+            // Buat link download otomatis
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QR_${qrId}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Gagal download QR:', error);
+            alert('Terjadi kesalahan saat mengunduh QR.');
+        }
+    });
+});
+</script>
+
 </body>
 </html>

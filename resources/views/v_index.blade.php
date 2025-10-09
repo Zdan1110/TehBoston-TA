@@ -77,7 +77,7 @@
     /* Mobile Specific Styles (max-width: 768px) - ONLY CHANGE THESE */
     @media (max-width: 768px) {
         .hero-image {
-            max-width: 300px;
+            max-width: 250px;
             margin: 0 auto;
         }
 

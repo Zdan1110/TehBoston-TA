@@ -149,6 +149,7 @@ Route::middleware(['auth', 'admin.only'])->prefix('admin')->group(function () {
     Route::post('/dataqr/tambah', [C_admin::class, 'qrcode'])->name('qr.store');
     Route::get('/qr/{data}', [C_admin::class, 'redirectToUrl'])->name('qr.redirect');
     Route::put('/qr/{id_qr}', [C_admin::class, 'updateqr'])->name('qr.update');
+    Route::get('/dataqr/download/{id_qr}', [C_admin::class, 'download'])->name('admin.dataqr.download');
     Route::delete('/qr/delete/{id_qr}', [C_admin::class, 'deleteqr'])->name('qr.delete');
     Route::get('/tabelfranchisebaru', [C_admin::class, 'index4'])->name('adminfranchisebaru');
     Route::get('/tabelfranchise', [C_admin::class, 'tabelfranchise'])->name('adminfranchise');

@@ -266,10 +266,39 @@ class C_admin extends Controller
     }
     
     public function indexqr()
-    {
-        $qrs = DB::table('tb_qr')->orderBy('created_at', 'desc')->get();
-        return view('admin.dataqr', compact('qrs'));
+{
+    $qrs = DB::table('tb_qr')->orderBy('created_at', 'desc')->get();
+    return view('admin.dataqr', compact('qrs'));
+}
+
+public function download($id_qr)
+{
+    // Ambil data QR dari database
+    $qr = DB::table('tb_qr')->where('id_qr', $id_qr)->first();
+
+    if (!$qr) {
+        abort(404, 'Data QR tidak ditemukan.');
     }
+
+    // Path file QR di public/uploads/qrcode/
+    $path = public_path('uploads/qrcode/' . $qr->qr_img);
+
+    if (!file_exists($path)) {
+        abort(404, 'File QR tidak ditemukan di server.');
+    }
+
+    // Nama file download
+    $filename = 'QR_' . $qr->id_qr . '.png';
+
+    // Kirim file untuk diunduh
+    return response()->download($path, $filename, [
+        'Content-Type' => 'image/png',
+        'Cache-Control' => 'no-cache, must-revalidate',
+        'Pragma' => 'no-cache',
+    ]);
+}
+
+
 
 
     public function tabelfranchise(Request $request)
