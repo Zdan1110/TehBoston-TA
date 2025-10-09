@@ -675,6 +675,8 @@
                                 </a>
                             </div>
                         </div>
+                        </div>
+                        </div>
                        
 
                 @empty
