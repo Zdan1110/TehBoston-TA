@@ -797,10 +797,12 @@
         Html5Qrcode.getCameras().then(devices => {
             if (devices && devices.length) {
                 const backCamera = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
-
+                
+                let qrBoxSize = window.innerWidth < 768 ? Math.floor(window.innerWidth * 0.79) : 250;
+                
                 html5QrCode.start(
                     { facingMode: "environment" },
-                    { fps: 10, qrbox: 250 },
+                    { fps: 10, qrbox: qrBoxSize },
                     qrCodeMessage => {
                         console.log("QR hasil:", qrCodeMessage);
                         window.location.href = `/admin/qr/${encodeURIComponent(qrCodeMessage)}`;

@@ -1,7 +1,7 @@
 @extends('kasir.template_kasir')
 
 @section('title', 'Edit Akun')
-@section('page-title', 'Edit Akun')
+@section('page-title', 'Edit Akun Kasir')
 
 @section('content')
 <div class="bg-white rounded-lg shadow-md p-6">
@@ -16,7 +16,7 @@
         {{-- cukup pakai POST, tidak perlu @method('POST') --}}
 
         <div class="mb-6">
-            <label for="username" class="block text-gray-700 font-medium mb-2">Username</label>
+            <label for="username" class="block text-gray-700 font-medium mb-2">Username Kasir</label>
             <input type="text" name="username" id="username"
                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent @error('username') border-red-500 @enderror"
                 value="{{ old('username', $akun->username) }}" required>

@@ -327,12 +327,18 @@ public function laporan(Request $request)
         if (!$user || !isset($user['id_akun'])) {
             return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
         }
-        $akun = $this->kasir->getAkunById($id_akun);
-
+        $id_akun = $this->kasir->getAkunById($id_akun);
+        
+        $akun = DB::table('tb_kasir')
+            ->leftJoin('tb_akun', 'tb_kasir.id_akun', '=', 'tb_akun.id_akun')
+            ->where('tb_akun.id_akun', $id_akun->id_akun)
+            ->select('tb_akun.*')
+            ->first();
+        
         if (!$akun) {
             abort(404);
         }
-
+        
         return view('kasir.v_editakun', compact('akun'));
     }
 
@@ -352,8 +358,9 @@ public function laporan(Request $request)
         }
 
         $this->kasir->updateAkun($id_akun, $data);
+        $idakun = Session::get('user')['id_akun'];
 
-        return redirect()->route('editakun', ['id_akun' => $id_akun])->with('pesan', 'Akun kasir berhasil diperbarui!');
+        return redirect()->route('editakun', ['id_akun' => $idakun])->with('pesan', 'Akun kasir berhasil diperbarui!');
     }
 
     public function print($id_penjualan)

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
 
 class M_kasir extends Model
@@ -65,7 +66,15 @@ class M_kasir extends Model
 
     public function getAkunById($id_akun)
     {
-        return DB::table('tb_akun')->where('id_akun', $id_akun)->first();
+        $idFranchise = Session::get('user')['id_franchise'];
+        return DB::table('tb_mitra')
+            ->leftJoin('tb_franchise', 'tb_mitra.id_mitra', '=', 'tb_franchise.id_mitra')
+            ->leftJoin('tb_kasir', 'tb_franchise.id_franchise', '=', 'tb_kasir.id_franchise')
+            ->leftJoin('tb_akun', 'tb_kasir.id_akun', '=', 'tb_akun.id_akun')
+            ->where('tb_mitra.id_akun', $id_akun)
+            ->where('tb_franchise.id_franchise', $idFranchise)
+            ->select('tb_kasir.id_akun')
+            ->first();
     }
 
     public function updateAkun($id_akun, $data)

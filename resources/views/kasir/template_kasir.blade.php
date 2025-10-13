@@ -208,10 +208,17 @@
                 <span>Pelaporan</span>
             </a>
 
-            <a href="{{ route('editakun', Session::get('user')['id_akun']) }}" class="nav-item flex items-center space-x-2 px-4 py-3 rounded-lg hover:bg-green-700">
-                <i class="fas fa-user-cog"></i>
-                <span>Setting Akun</span>
-            </a>
+            @php
+                $user = Session::get('user');
+            @endphp
+            
+            @if($user && $user['type_akun'] != 'kasir')
+                <a href="{{ route('editakun', $user['id_akun']) }}" class="nav-item flex items-center space-x-2 px-4 py-3 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Setting Akun</span>
+                </a>
+            @endif
+
 
             {{-- <a href="/home " class="nav-item flex items-center space-x-2 px-4 py-3 rounded-lg hover:bg-green-700">
                 <i class="fas fa-sign-out-alt"></i>
