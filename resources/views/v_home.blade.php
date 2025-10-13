@@ -154,53 +154,50 @@
         <div class="row g-4">
             @php
                 $produkList = [
-                    ['img' => 'teaseries.png', 'title' => 'Tea Series', 'desc' => ''],
-                    ['img' => 'yakultseries.png', 'title' => 'Yakult Series', 'desc' => ''],
-                    ['img' => 'coffeeseries.png', 'title' => 'Coffee Series', 'desc' => ''],
-                    ['img' => 'blend.png', 'title' => 'Blend Series', 'desc' => ''],
+                    ['img' => 'teaseries.png', 'title' => 'Tea Series', 'desc' => '', 'menu_img' => 'Tea-Series.png'],
+                    ['img' => 'yakultseries.png', 'title' => 'Yakult Series', 'desc' => '', 'menu_img' => 'Yakult-Series.png'],
+                    ['img' => 'coffeeseries.png', 'title' => 'Coffee Series', 'desc' => '', 'menu_img' => 'Coffee-Series.png'],
+                    ['img' => 'blend.png', 'title' => 'Blend Series', 'desc' => '', 'menu_img' => 'Blend-Series.png'],
                 ];
             @endphp
 
             @foreach ($produkList as $i => $produk)
-            {{-- Menggunakan col-6 agar tetap 2 kolom di HP, mb-4 untuk jarak bawah --}}
+            {{-- Kolom untuk setiap kartu produk --}}
             <div class="col-6 col-sm-6 col-md-6 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="{{ 100 * ($i + 1) }}">
-                {{-- Menggunakan class .card dari Bootstrap dan .h-100 untuk tinggi yang sama --}}
                 <div class="card shadow-sm border-0 h-100">
                     <img src="{{ asset('gambar/' . $produk['img']) }}" class="card-img-top" alt="{{ $produk['title'] }}">
-                    {{-- KUNCI PERBAIKAN: Menambahkan d-flex dan flex-column agar mt-auto pada tombol berfungsi --}}
                     <div class="card-body d-flex flex-column">
-                        {{-- Wrapper untuk konten agar tombol bisa didorong ke bawah --}}
                         <div>
                             <h5 class="card-title">{{ $produk['title'] }}</h5>
                             <p class="card-text">{{ $produk['desc'] }}</p>
                         </div>
-                        {{-- mt-auto akan mendorong tombol ini ke bagian paling bawah card --}}
-                        <a href="#" class="btn custom-btn mt-auto" data-bs-toggle="modal" data-bs-target="#menuModal">Lihat Produk</a>
+                        {{-- Tombol ini sekarang menargetkan modal yang unik berdasarkan index ($i) --}}
+                        <a href="#" class="btn custom-btn mt-auto" data-bs-toggle="modal" data-bs-target="#menuModal-{{ $i }}">Lihat Produk</a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modal yang sesuai untuk setiap produk, ditempatkan di dalam loop --}}
+            <div class="modal fade" id="menuModal-{{ $i }}" tabindex="-1" aria-labelledby="menuModalLabel-{{ $i }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            {{-- Judul modal dinamis sesuai nama produk --}}
+                            <h5 class="modal-title" id="menuModalLabel-{{ $i }}">Menu {{ $produk['title'] }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center p-2">
+                            {{-- Gambar modal dinamis sesuai file 'menu_img' --}}
+                            <img src="{{ asset('gambar/' . $produk['menu_img']) }}" alt="Menu {{ $produk['title'] }}" class="img-fluid rounded">
+                        </div>
                     </div>
                 </div>
             </div>
             @endforeach
         </div>
     </div>
-
-    {{-- Modal tidak berubah --}}
-    <div class="modal fade" id="menuModal" tabindex="-1" aria-labelledby="menuModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title" id="menuModalLabel">Menu Produk</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <img src="{{ asset('gambar/Menu.png') }}" alt="Menu Produk" class="img-fluid rounded shadow mb-4">
-                    <a href="{{ asset('gambar/Menu.pdf') }}" class="btn btn-primary" download>
-                        <i class="bi bi-download me-2"></i>Download Menu PDF
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 </section>
+
 
 <section class="faq-section py-5 bg-white">
     <div class="container">
@@ -261,7 +258,7 @@
         </div>
     </div>
 </section>
-      
+    
 
 <section class="testimonial-section py-5 bg-light">
     <div class="container">
@@ -276,17 +273,17 @@
                             <div class="me-3 d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 50px; height: 50px;">
                                 <i class="fas fa-user"></i>
                             </div>
-                              <div>
-                                <h6 class="mb-0 fw-bold">{{ $t->nama_lengkap }}</h6>
-                                <div class="text-warning">
-                                    @for ($i = 0; $i < $t->rating; $i++)
-                                        <i class="fas fa-star"></i>
-                                    @endfor
-                                    @for ($i = $t->rating; $i < 5; $i++)
-                                        <i class="far fa-star"></i>
-                                    @endfor
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ $t->nama_lengkap }}</h6>
+                                    <div class="text-warning">
+                                        @for ($i = 0; $i < $t->rating; $i++)
+                                            <i class="fas fa-star"></i>
+                                        @endfor
+                                        @for ($i = $t->rating; $i < 5; $i++)
+                                            <i class="far fa-star"></i>
+                                        @endfor
+                                    </div>
                                 </div>
-                            </div>
                         </div>
                         <p class="mb-0 fst-italic">{{ $t->ulasan_pesan }}</p>
                     </div>

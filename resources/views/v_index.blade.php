@@ -136,11 +136,12 @@
         <h2 class="section-title" data-aos="fade-up">Produk Series Kami</h2>
         <div class="row g-4">
             @php
+                // UPDATE: Added 'menu_img' key to each product
                 $produkList = [
-                    ['img' => 'teaseries.png', 'title' => 'Tea Series', 'desc' => ''],
-                    ['img' => 'yakultseries.png', 'title' => 'Yakult Series', 'desc' => ''],
-                    ['img' => 'coffeeseries.png', 'title' => 'Coffee Series', 'desc' => ''],
-                    ['img' => 'blend.png', 'title' => 'Blend Series', 'desc' => ''],
+                    ['img' => 'teaseries.png', 'title' => 'Tea Series', 'desc' => '', 'menu_img' => 'Tea-Series.png'],
+                    ['img' => 'yakultseries.png', 'title' => 'Yakult Series', 'desc' => '', 'menu_img' => 'Yakult-Series.png'],
+                    ['img' => 'coffeeseries.png', 'title' => 'Coffee Series', 'desc' => '', 'menu_img' => 'Coffee-Series.png'],
+                    ['img' => 'blend.png', 'title' => 'Blend Series', 'desc' => '', 'menu_img' => 'Blend-Series.png'],
                 ];
             @endphp
 
@@ -150,37 +151,34 @@
                 {{-- Menggunakan class .card dari Bootstrap dan .h-100 untuk tinggi yang sama --}}
                 <div class="card shadow-sm border-0 h-100">
                     <img src="{{ asset('gambar/' . $produk['img']) }}" class="card-img-top" alt="{{ $produk['title'] }}">
-                    {{-- KUNCI PERBAIKAN: Menambahkan d-flex dan flex-column agar mt-auto pada tombol berfungsi --}}
                     <div class="card-body d-flex flex-column">
-                        {{-- Wrapper untuk konten agar tombol bisa didorong ke bawah --}}
                         <div>
                             <h5 class="card-title">{{ $produk['title'] }}</h5>
                             <p class="card-text">{{ $produk['desc'] }}</p>
                         </div>
-                        {{-- mt-auto akan mendorong tombol ini ke bagian paling bawah card --}}
-                        <a href="#" class="btn custom-btn mt-auto" data-bs-toggle="modal" data-bs-target="#menuModal">Lihat Produk</a>
+                        {{-- UPDATE: Button now targets a unique modal ID --}}
+                        <a href="#" class="btn custom-btn mt-auto" data-bs-toggle="modal" data-bs-target="#menuModal-{{ $i }}">Lihat Produk</a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- UPDATE: A unique modal is generated for each product inside the loop --}}
+            <div class="modal fade" id="menuModal-{{ $i }}" tabindex="-1" aria-labelledby="menuModalLabel-{{ $i }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            {{-- Modal title is now dynamic --}}
+                            <h5 class="modal-title" id="menuModalLabel-{{ $i }}">Menu {{ $produk['title'] }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center p-2">
+                            {{-- Modal image is now dynamic --}}
+                            <img src="{{ asset('gambar/' . $produk['menu_img']) }}" alt="Menu {{ $produk['title'] }}" class="img-fluid rounded">
+                        </div>
                     </div>
                 </div>
             </div>
             @endforeach
-        </div>
-    </div>
-
-    {{-- Modal tidak berubah --}}
-    <div class="modal fade" id="menuModal" tabindex="-1" aria-labelledby="menuModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content bg-dark text-white">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title" id="menuModalLabel">Menu Produk</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <img src="{{ asset('gambar/Menu.png') }}" alt="Menu Produk" class="img-fluid rounded shadow mb-4">
-                    <a href="{{ asset('gambar/Menu.pdf') }}" class="btn btn-primary" download>
-                        <i class="bi bi-download me-2"></i>Download Menu PDF
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 </section>
