@@ -6,7 +6,7 @@
                 <h4 class="fw-bold mb-4 position-relative pb-3">Teh Boston</h4>
                 <p class="mb-4 opacity-75">Franchise minuman teh dengan varian rasa unik dan berkualitas. Menyediakan peluang kemitraan bagi yang ingin memulai usaha minuman.</p>
                 <div class="d-flex">
-                        <a href="https://wa.me/6285222124176" class="social-icon me-3" target="_blank" rel="noopener noreferrer">
+                        <a href="https://wa.me/6285141606776" class="social-icon me-3" target="_blank" rel="noopener noreferrer">
                             <i class="fab fa-whatsapp"></i>
                         </a>
                         <a href="https://www.instagram.com/tehboston.id?igsh=Yzlmd2I2N3E3eXI1" class="social-icon me-3" target="_blank" rel="noopener noreferrer">
@@ -51,7 +51,7 @@
                     </li>
                     <li class="d-flex mb-3">
                         <i class="fas fa-phone me-3 mt-1 text-warning"></i>
-                        <span>+62 852 2212 4176</span>
+                        <span>+62 8514-1606-776</span>
                     </li>
                     <li class="d-flex mb-3">
                         <i class="fas fa-envelope me-3 mt-1 text-warning"></i>
