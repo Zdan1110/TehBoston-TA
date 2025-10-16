@@ -110,14 +110,14 @@
                     <button type="button" class="btn btn-success mt-2" id="add-row">+ Tambah Bahan</button>
 
                     <div class="mt-4">
-                        <label class="form-label fw-bold">Total Harga</label>
+                        <label class="form-label fw-bold" style="gap: 20px">Total Harga</label>
                         <input type="text" id="total_harga_display" class="form-control" readonly value="Rp. 0">
                         <input type="hidden" name="total_harga" id="total_harga_value">
                     </div>
 
                     <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-light">
-                            <i class="bi bi-arrow-left me-2"></i>Kembali
+                        <button type="submit" class="btn btn-primary" style="background-color: #ffd600; color:black">
+                            <i class="bi bi-clock me-2"></i>Pending
                         </button>
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-save me-2"></i>Simpan Barang Masuk

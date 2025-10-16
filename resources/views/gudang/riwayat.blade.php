@@ -2,6 +2,34 @@
 
 @section('title', 'Riwayat Pemasukan dan Pengeluaran Barang')
 
+<style>
+@media (max-width: 768px) {
+    /* Bungkus tombol export agar bisa digeser kalau sempit */
+    .d-flex.flex-wrap.align-items-center.gap-2.mt-2.mt-md-0 {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 5px;
+    }
+
+    /* Teks total uang keluar biar gak makan tempat */
+    .d-flex.flex-wrap.align-items-center.gap-2.mt-2.mt-md-0 .text-end {
+        flex: 0 0 auto;
+        font-size: 0.85rem;
+        margin-right: 10px !important;
+    }
+
+    /* Tombol PDF & Excel lebih kecil dan sejajar */
+    .d-flex.flex-wrap.align-items-center.gap-2.mt-2.mt-md-0 .btn {
+        flex: 0 0 auto;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        white-space: nowrap;
+    }
+}
+</style>
+
+
 @section('content')
 @php
     $user = Session::get('user');
@@ -59,20 +87,21 @@
                     </form>
 
                     @if(!$isKasir)
-                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
-                        <div class="text-end me-3">
-                            <strong>Total Uang Keluar:</strong><br>
-                            <span class="text-success">Rp. {{ number_format($totalUangKeluar, 0, ',', '.') }}</span>
-                        </div>
+                   <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
+    <div class="text-end me-3">
+        <strong>Total Uang Keluar:</strong><br>
+        <span class="text-success">Rp. {{ number_format($totalUangKeluar, 0, ',', '.') }}</span>
+    </div>
 
-                        {{-- Tombol Export --}}
-                        <a href="{{ route('riwayatmasuk.export.pdf', request()->query()) }}" class="btn btn-danger">
-                            <i class="bi bi-file-earmark-pdf"></i> PDF
-                        </a>
-                        <a href="{{ route('riwayatmasuk.export.excel', request()->query()) }}" class="btn btn-success">
-                            <i class="bi bi-file-earmark-excel"></i> Excel
-                        </a>
-                    </div>
+    {{-- Tombol Export --}}
+    <a href="{{ route('riwayatmasuk.export.pdf', request()->query()) }}" class="btn btn-danger">
+        <i class="bi bi-file-earmark-pdf"></i> PDF
+    </a>
+    <a href="{{ route('riwayatmasuk.export.excel', request()->query()) }}" class="btn btn-success">
+        <i class="bi bi-file-earmark-excel"></i> Excel
+    </a>
+</div>
+
                     @endif
                 </div>
 
@@ -89,6 +118,8 @@
                                 @unless($isKasir)
                                     <th>Struk</th>
                                 @endunless
+                                <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -130,7 +161,34 @@
                                             <i class="text-muted fst-italic">tidak ada struk</i>
                                         @endif
                                     </td>
-                                    @endunless
+                                
+                                    <td class="text-center">
+                                    <span class="badge bg-warning text-dark me-1">Pending</span>
+                                    {{-- <span class="badge bg-success">Completed</span> --}}
+                                </td>
+                                 
+    <td class="text-center">
+    <div class="d-flex justify-content-center align-items-center gap-2 action-buttons">
+        <!-- Tombol Complete -->
+        <button class="btn btn-sm btn-outline-success p-1 btn-complete" title="Selesaikan">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+        </button>
+
+        <!-- Tombol Edit -->
+        <button class="btn btn-sm btn-outline-warning p-1 btn-edit" title="Edit">
+            <i class="bi bi-pencil-square fs-5"></i>
+        </button>
+
+        <!-- Tombol Delete -->
+        <button class="btn btn-sm btn-outline-danger p-1 btn-delete" title="Hapus">
+            <i class="bi bi-trash-fill fs-5"></i>
+        </button>
+    </div>
+</td>
+
+
+
+                             @endunless
                                 </tr>
                             @empty
                                 <tr>
@@ -262,10 +320,160 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Edit Dummy -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="editModalLabel">
+                    <i class="bi bi-pencil-square"></i> Edit Data Pemasukan
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Form Dummy -->
+                <form id="editFormDummy">
+                    <div class="mb-3">
+                        <label class="form-label">Nama Bahan</label>
+                        <input type="text" class="form-control" placeholder="Masukkan nama bahan...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Jumlah</label>
+                        <input type="number" class="form-control" placeholder="Masukkan jumlah...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Supplier</label>
+                        <input type="text" class="form-control" placeholder="Masukkan nama supplier...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Total Harga</label>
+                        <input type="text" class="form-control" placeholder="Masukkan total harga...">
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="btnSimpanEditDummy">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endif
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // === TOMBOL COMPLETE ===
+    document.addEventListener('click', function(e) {
+        const completeBtn = e.target.closest('.btn-complete');
+        if (!completeBtn) return;
+
+        const td = completeBtn.closest('td');
+        const row = completeBtn.closest('tr');
+        const statusTd = row.querySelector('td:nth-last-child(2)'); // kolom status
+        const actionDiv = td.querySelector('.action-buttons');
+
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: 'Barang sudah datang dan sesuai dengan data?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, sesuai',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Ubah label status
+                statusTd.innerHTML = '<span class="badge bg-success">Completed</span>';
+
+                // Ubah tombol hanya jadi hapus
+                actionDiv.innerHTML = `
+                    <button class="btn btn-sm btn-outline-danger p-1 btn-delete" title="Hapus">
+                        <i class="bi bi-trash-fill fs-5"></i>
+                    </button>
+                `;
+
+                // Notifikasi sukses
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Status berhasil diubah menjadi Completed.',
+                    icon: 'success',
+                    confirmButtonColor: '#198754',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    });
+
+    // === TOMBOL EDIT (Dummy) ===
+document.addEventListener('click', function(e) {
+    const editBtn = e.target.closest('.btn-edit');
+    if (!editBtn) return;
+
+    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    editModal.show();
+});
+
+// === SIMPAN EDIT (Dummy) ===
+document.getElementById('btnSimpanEditDummy').addEventListener('click', function() {
+    Swal.fire({
+        title: 'Berhasil!',
+        text: 'Perubahan data berhasil disimpan (dummy).',
+        icon: 'success',
+        confirmButtonColor: '#198754',
+        timer: 2000,
+        showConfirmButton: false
+    });
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+    modal.hide();
+});
+
+
+    // === TOMBOL HAPUS ===
+    document.addEventListener('click', function(e) {
+        const deleteBtn = e.target.closest('.btn-delete');
+        if (!deleteBtn) return;
+
+        const row = deleteBtn.closest('tr');
+
+        Swal.fire({
+            title: 'Yakin ingin menghapus?',
+            text: 'Data ini akan dihapus secara permanen!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, hapus',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                row.remove();
+
+                Swal.fire({
+                    title: 'Dihapus!',
+                    text: 'Data berhasil dihapus.',
+                    icon: 'success',
+                    confirmButtonColor: '#198754',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    });
+
+});
+</script>
+
+
 <script>
 function toggleFilterTanggal() {
     document.getElementById('filterTanggalWrapper').classList.toggle('d-none');
