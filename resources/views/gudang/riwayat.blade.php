@@ -27,6 +27,12 @@
         white-space: nowrap;
     }
 }
+
+.modal-blur {
+    opacity: 0.4;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
 </style>
 
 
@@ -118,7 +124,7 @@
                                 @unless($isKasir)
                                     <th>Struk</th>
                                 @endunless
-                                <th>Status</th>
+                                <!-- <th>Status</th> -->
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -162,29 +168,32 @@
                                         @endif
                                     </td>
                                 
-                                    <td class="text-center">
+                                    <!-- <td class="text-center">
                                     <span class="badge bg-warning text-dark me-1">Pending</span>
                                     {{-- <span class="badge bg-success">Completed</span> --}}
-                                </td>
+                                </td> -->
                                  
-    <td class="text-center">
-    <div class="d-flex justify-content-center align-items-center gap-2 action-buttons">
-        <!-- Tombol Complete -->
-        <button class="btn btn-sm btn-outline-success p-1 btn-complete" title="Selesaikan">
-            <i class="bi bi-check-circle-fill fs-5"></i>
-        </button>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center align-items-center gap-2 action-buttons">
+                                        <!-- Tombol Complete -->
+                                        <!-- <button class="btn btn-sm btn-outline-success p-1 btn-complete" title="Selesaikan">
+                                            <i class="bi bi-check-circle-fill fs-5"></i>
+                                        </button> -->
 
-        <!-- Tombol Edit -->
-        <button class="btn btn-sm btn-outline-warning p-1 btn-edit" title="Edit">
-            <i class="bi bi-pencil-square fs-5"></i>
-        </button>
+                                        <!-- Tombol Edit -->
+                                        <button 
+                                            class="btn btn-sm btn-outline-warning p-1 btn-edit-masuk" 
+                                            title="Edit"
+                                            data-id="{{ $item->id_transaksi }}">
+                                            <i class="bi bi-pencil-square fs-5"></i>
+                                        </button>
 
-        <!-- Tombol Delete -->
-        <button class="btn btn-sm btn-outline-danger p-1 btn-delete" title="Hapus">
-            <i class="bi bi-trash-fill fs-5"></i>
-        </button>
-    </div>
-</td>
+                                        <!-- Tombol Delete -->
+                                        <button class="btn btn-sm btn-outline-danger p-1 btn-delete-transaksimasuk" title="Hapus" data-id="{{ $item->id_transaksi }}">
+                                            <i class="bi bi-trash-fill fs-5"></i>
+                                        </button>
+                                    </div>
+                                </td>
 
 
 
@@ -239,6 +248,7 @@
                                 <th>Terakhir Diperbarui</th>
                                 @unless($isKasir)
                                     <th>Struk</th>
+                                    <th>Action</th>
                                 @endunless
                             </tr>
                         </thead>
@@ -287,6 +297,22 @@
                                             <i class="text-muted fst-italic">tidak ada struk</i>
                                         @endif
                                     </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center align-items-center gap-2 action-buttons">
+                                            <!-- Tombol Edit -->
+                                            <button 
+                                                class="btn btn-sm btn-outline-warning p-1 btn-edit-keluar" 
+                                                title="Edit"
+                                                data-id="{{ $data->id_transaksi }}">
+                                                <i class="bi bi-pencil-square fs-5"></i>
+                                            </button>
+
+                                            <!-- Tombol Delete -->
+                                            <button class="btn btn-sm btn-outline-danger p-1 btn-delete-transaksi" title="Hapus" data-id="{{ $data->id_transaksi }}">
+                                                <i class="bi bi-trash-fill fs-5"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                     @endunless
                                 </tr>
                             @empty
@@ -321,51 +347,165 @@
     </div>
 </div>
 
-<!-- Modal Edit Dummy -->
-<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+<!-- Modal Edit Pemasukan -->
+<div class="modal fade" id="editMasukModal" tabindex="-1" aria-labelledby="editMasukModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title" id="editModalLabel">
+                <h5 class="modal-title" id="editMasukModalLabel">
                     <i class="bi bi-pencil-square"></i> Edit Data Pemasukan
+
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
             </div>
 
             <div class="modal-body">
-                <!-- Form Dummy -->
-                <form id="editFormDummy">
-                    <div class="mb-3">
-                        <label class="form-label">Nama Bahan</label>
-                        <input type="text" class="form-control" placeholder="Masukkan nama bahan...">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Jumlah</label>
-                        <input type="number" class="form-control" placeholder="Masukkan jumlah...">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Supplier</label>
-                        <input type="text" class="form-control" placeholder="Masukkan nama supplier...">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Total Harga</label>
-                        <input type="text" class="form-control" placeholder="Masukkan total harga...">
-                    </div>
+                <form id="editMasukForm">
+                    
+                    <input type="hidden" id="id_transaksi" name="id_transaksi" value="">
+                    <!-- 🟡 Di sinilah tempat untuk menampilkan daftar bahan dinamis -->
+                    <div id="list-bahan-container-masuk"></div>
+
                 </form>
             </div>
 
             <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnTambahBahanMasuk">
+                    <i class="bi bi-plus-circle"></i> Tambah Bahan Masuk
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-success" id="btnSimpanEditDummy">Simpan Perubahan</button>
+                <button type="button" class="btn btn-success" id="btnSimpanEditMasukDummy">Simpan Perubahan</button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Edit Pengeluaran -->
+<div class="modal fade" id="editKeluarModal" tabindex="-1" aria-labelledby="editKeluarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="editKeluarModalLabel">
+                    <i class="bi bi-pencil-square"></i> Edit Data Pengeluaran
+
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="editKeluarForm">
+                    
+                    <input type="hidden" id="id_transaksi" name="id_transaksi" value="">
+                    <!-- 🟡 Di sinilah tempat untuk menampilkan daftar bahan dinamis -->
+                    <div id="list-bahan-container"></div>
+
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnTambahBahanKeluar">
+                    <i class="bi bi-plus-circle"></i> Tambah Bahan Keluar
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="btnSimpanEditKeluarDummy">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="tambahBahanKeluarModal" tabindex="-1" aria-labelledby="tambahBahanKeluarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="tambahBahanKeluarModalLabel">
+                    <i class="bi bi-plus-circle"></i> Tambah Bahan Keluar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formTambahBahanKeluar">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="bahan_baku" class="form-label">Pilih Bahan Baku</label>
+                        <select class="form-select" id="bahan_baku" name="bahan_baku" required>
+                            <option value="" disabled selected hidden>-- Pilih Bahan Baku --</option>
+                            @foreach($bahanbaku as $bahan)
+                                <option value="{{ $bahan->id_bahanbaku }}" data-harga="{{ $bahan->harga_jual }}">
+                                    {{ $bahan->nama_bahan }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="jumlah" class="form-label">Jumlah</label>
+                        <input type="number" class="form-control" id="jumlah" name="jumlah" min="1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="total_harga" class="form-label">Total Harga</label>
+                        <input type="text" class="form-control" style="background-color:rgb(212, 212, 212);" id="total_harga" name="total_harga" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="btnSimpanTambahBahanKeluar">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="tambahBahanMasukModal" tabindex="-1" aria-labelledby="tambahBahanMasukModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="tambahBahanMasukModalLabel">
+                    <i class="bi bi-plus-circle"></i> Tambah Bahan Masuk
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formTambahBahanMasuk">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="bahan_bakumasuk" class="form-label">Pilih Bahan Baku</label>
+                        <select class="form-select" id="bahan_bakumasuk" name="bahan_bakumasuk" required>
+                            <option value="" disabled selected hidden>-- Pilih Bahan Baku --</option>
+                            @foreach($bahanbaku as $bahan)
+                                <option value="{{ $bahan->id_bahanbaku }}" data-harga="{{ $bahan->harga_jual }}">
+                                    {{ $bahan->nama_bahan }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="jumlahmasuk" class="form-label">Jumlah</label>
+                        <input type="number" class="form-control" id="jumlahmasuk" name="jumlahmasuk" min="1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="total_harga" class="form-label">Total Harga</label>
+                        <input type="text" class="form-control" style="background-color:rgb(212, 212, 212);" id="total_harga_masuk" name="total_harga_masuk" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="btnSimpanTambahBahanMasuk">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @endif
 @endsection
 
 @section('scripts')
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -414,14 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // === TOMBOL EDIT (Dummy) ===
-document.addEventListener('click', function(e) {
-    const editBtn = e.target.closest('.btn-edit');
-    if (!editBtn) return;
 
-    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
-    editModal.show();
-});
 
 // === SIMPAN EDIT (Dummy) ===
 document.getElementById('btnSimpanEditDummy').addEventListener('click', function() {
@@ -447,7 +580,7 @@ document.getElementById('btnSimpanEditDummy').addEventListener('click', function
 
         Swal.fire({
             title: 'Yakin ingin menghapus?',
-            text: 'Data ini akan dihapus secara permanen!',
+            text: 'Data ini akan dihapus secara permanens!',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -511,6 +644,470 @@ document.addEventListener('DOMContentLoaded', function () {
         iframe.src = '';
     });
     @endunless
+});
+
+// === SIMPAN EDIT PENGELUARAN (Dummy) ===
+$('#btnSimpanEditKeluarDummy').off('click').on('click', function() {
+    // Ambil semua bahan dari modal
+    let dataUpdate = [];
+
+    $('#list-bahan-container .border').each(function() {
+        const id_pengeluaran = $(this).find('.btn-hapus-bahan').data('id');
+        const jumlah = $(this).find('input[name="jumlah[]"]').val();
+        const total = $(this).find('input[name="harga[]"]').val();
+        const idTransaksi = $('#id_transaksi').val();
+
+        dataUpdate.push({
+            id_pengeluaran: id_pengeluaran,
+            jumlah: jumlah,
+            total: total,
+            id_transaksi: idTransaksi
+        });
+    });
+
+    // Kirim via AJAX ke controller Laravel
+    $.ajax({
+        url: '/gudang/riwayat/updatekeluar',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            data: dataUpdate
+        },
+        success: function(response) {
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Semua data pengeluaran berhasil diperbarui.',
+                icon: 'success',
+                confirmButtonColor: '#198754',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            $('#editKeluarModal').modal('hide');
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
+        },
+        error: function(xhr) {
+            Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
+        }
+    });
+});
+
+$(document).on('click', '.btn-edit-keluar', function() {
+    const idTransaksi = $(this).data('id');
+
+    $.ajax({
+        url: `/gudang/riwayat/editkeluar/${idTransaksi}`,
+        type: 'GET',
+        success: function(response) {
+            if (response && response.length > 0) {
+                // Kosongkan kontainer sebelumnya
+                $('#list-bahan-container').empty();
+
+                $('#id_transaksi').val(idTransaksi);
+                // Loop setiap data bahan
+                response.forEach((item, index) => {
+                    const html = `
+                        <div class="border rounded p-3 mb-3">
+                            <h6 class="fw-bold text-warning mb-3">Bahan ke-${index + 1}</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Nama Bahan</label>
+                                <input type="text" class="form-control" style="background-color:rgb(212, 212, 212);" name="nama_bahan[]" value="${item.nama_bahan}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Jumlah</label>
+                                <input type="number" class="form-control input-jual" name="jumlah[]" value="${item.jumlah}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Total Harga</label>
+                                <input type="number" class="form-control input-harga" style="background-color:rgb(212, 212, 212);" name="harga[]" value="${item.harga_jual * item.jumlah}" data-harga-awal="${item.harga_jual}" readonly>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm btn-hapus-bahan" data-id="${item.id_pengeluaran}">
+                                <i class="bi bi-trash"></i> Hapus Transaksi Bahan baku ke-${index + 1}
+                            </button>
+                        </div>
+                    `;
+                    $('#list-bahan-container').append(html);
+                });
+
+                // Tampilkan modal
+                $('#editKeluarModal').modal('show');
+            } else {
+                Swal.fire('Oops!', 'Data tidak ditemukan', 'warning');
+            }
+        },
+        error: function() {
+            Swal.fire('Gagal!', 'Gagal memuat data pengeluaran.', 'error');
+        }
+    });
+});
+
+$(document).on('input', '.input-jual', function() {
+    const parent = $(this).closest('.border');
+    const hargaAwal = parseFloat(parent.find('.input-harga').data('harga-awal')) || 0;
+    const tambahan = parseFloat($(this).val()) || 0;
+
+    parent.find('.input-harga').val(hargaAwal * tambahan);
+});
+
+$(document).on('click', '.btn-hapus-bahan', function() {
+    const idPengeluaran = $(this).data('id'); // ambil id_pengeluaran dari tombol
+    const parentDiv = $(this).closest('.border'); // ambil elemen card bahan
+
+    if (confirm('Yakin ingin menghapus data ini? ( Proses hapus data ini akan langsung dijalankan dan tidak bisa di kembalikan lagi! )')) {
+        $.ajax({
+            url: '/gudang/riwayat/hapus-bahankeluar/' + idPengeluaran, // route Laravel untuk hapus
+            type: 'DELETE', // gunakan metode DELETE
+            data: {
+                _token: '{{ csrf_token() }}' // wajib untuk keamanan Laravel
+            },
+            success: function(response) {
+                alert('Data berhasil dihapus!');
+                parentDiv.remove(); // hapus tampilan elemen tanpa reload
+            },
+            error: function(xhr) {
+                alert('Gagal menghapus data!');
+            }
+        });
+    }
+});
+
+// Ketika tombol tambah bahan keluar diklik
+$('#btnTambahBahanKeluar').on('click', function() {
+    $('#editKeluarModal .modal-content').addClass('modal-blur');
+    $('#tambahBahanKeluarModal').modal('show');
+});
+
+// Hitung total harga otomatis
+$('#jumlah, #bahan_baku').on('input change', function() {
+    const harga = $('#bahan_baku option:selected').data('harga') || 0;
+    const jumlah = parseFloat($('#jumlah').val()) || 0;
+    const total = harga * jumlah;
+    $('#total_harga').val(total.toLocaleString('id-ID'));
+});
+
+$('#tambahBahanKeluarModal').on('hidden.bs.modal', function () {
+    $('#editKeluarModal .modal-content').removeClass('modal-blur');
+});
+
+// Simpan bahan keluar baru langsung ke DB
+$('#btnSimpanTambahBahanKeluar').on('click', function() {
+    const bahanId = $('#bahan_baku').val();
+    const bahanNama = $('#bahan_baku option:selected').text();
+    const jumlah = $('#jumlah').val();
+    const hargaSatuan = $('#bahan_baku option:selected').data('harga') || 0;
+    const total = hargaSatuan * parseFloat(jumlah || 0);
+    const idTransaksi = $('#id_transaksi').val();
+
+    if (!bahanId || !jumlah) {
+        Swal.fire('Peringatan!', 'Mohon lengkapi semua data.', 'warning');
+        return;
+    }
+
+    // Kirim data via AJAX ke controller Laravel
+    $.ajax({
+        url: '/gudang/riwayat/tambah-bahankeluar', // route Laravel untuk simpan
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            id_transaksi: idTransaksi,
+            id_bahanbaku: bahanId,
+            jumlah: jumlah,
+            total: total
+        },
+        success: function(response) {
+            if (response.success) {
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Bahan keluar berhasil disimpan.',
+                    icon: 'success',
+                    confirmButtonColor: '#198754',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Tutup modal tambah
+                    $('#tambahBahanKeluarModal').modal('hide');
+                    // Refresh halaman
+                    location.reload();
+                });
+
+                // Reset form
+                $('#formTambahBahanKeluar')[0].reset();
+            } else {
+                Swal.fire('Gagal!', response.message || 'Terjadi kesalahan saat menyimpan data.', 'error');
+            }
+        },
+        error: function(xhr) {
+            Swal.fire('Gagal!', 'Terjadi kesalahan server saat menyimpan data.', 'error');
+        }
+    });
+});
+
+// Hapus bahan dari daftar
+$(document).on('click', '.btn-hapus-bahan', function() {
+    $(this).closest('.border').remove();
+});
+
+$(document).on('click', '.btn-delete-transaksi', function() {
+    const idTransaksi = $(this).data('id');
+    const row = $(this).closest('tr');
+
+    Swal.fire({
+        title: 'Yakin ingin menghapus?',
+        text: 'Data transaksi dan bahan yang keluar akan dihapus secara permanen!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, hapus',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/gudang/riwayat/hapus/' + idTransaksi,
+                type: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire('Dihapus!', 'Data berhasil dihapus.', 'success');
+                        row.remove(); // hapus baris di tabel tanpa reload
+                    } else {
+                        Swal.fire('Gagal!', response.message || 'Gagal menghapus data.', 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Gagal!', 'Terjadi kesalahan saat menghapus.', 'error');
+                }
+            });
+        }
+    });
+});
+
+
+</script>
+<script>
+    $(document).on('click', '.btn-hapus-bahanmasuk', function() {
+    const idPemasukan = $(this).data('id'); // ambil id_pengeluaran dari tombol
+    const parentDiv = $(this).closest('.border'); // ambil elemen card bahan
+
+    if (confirm('Yakin ingin menghapus data ini? ( Proses hapus data ini akan langsung dijalankan dan tidak bisa di kembalikan lagi! )')) {
+        $.ajax({
+            url: '/gudang/riwayat/hapus-bahanmasuk/' + idPemasukan, // route Laravel untuk hapus
+            type: 'DELETE', // gunakan metode DELETE
+            data: {
+                _token: '{{ csrf_token() }}' // wajib untuk keamanan Laravel
+            },
+            success: function(response) {
+                alert('Data berhasil dihapus!');
+                parentDiv.remove(); // hapus tampilan elemen tanpa reload
+            },
+            error: function(xhr) {
+                alert('Gagal menghapus data!');
+            }
+        });
+    }
+});
+
+// === SIMPAN EDIT PEMASUKAN (Dummy) ===
+$('#btnSimpanEditMasukDummy').off('click').on('click', function() {
+    // Ambil semua bahan dari modal
+    let dataUpdate = [];
+
+    $('#list-bahan-container-masuk .border').each(function() {
+        const id_pemasukan = $(this).find('.btn-hapus-bahanmasuk').data('id');
+        const jumlah = $(this).find('input[name="jumlah[]"]').val();
+        const total = $(this).find('input[name="harga[]"]').val();
+        const idTransaksi = $('#id_transaksi').val();
+
+        dataUpdate.push({
+            id_pemasukan: id_pemasukan,
+            jumlah: jumlah,
+            total: total,
+            id_transaksi: idTransaksi
+        });
+    });
+
+    // Kirim via AJAX ke controller Laravel
+    $.ajax({
+        url: '/gudang/riwayat/updatemasuk',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            data: dataUpdate
+        },
+        success: function(response) {
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Semua data pemasukan berhasil diperbarui.',
+                icon: 'success',
+                confirmButtonColor: '#198754',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            $('#editKeluarModal').modal('hide');
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
+        },
+        error: function(xhr) {
+            Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
+        }
+    });
+});
+
+$('#btnTambahBahanMasuk').on('click', function() {
+    $('#editMasukModal .modal-content').addClass('modal-blur');
+    $('#tambahBahanMasukModal').modal('show');
+});
+
+// Hitung total harga otomatis
+$('#jumlahmasuk, #bahan_bakumasuk').on('input change', function() {
+    const harga = $('#bahan_bakumasuk option:selected').data('harga') || 0;
+    const jumlah = parseFloat($('#jumlahmasuk').val()) || 0;
+    const total = harga * jumlah;
+    $('#total_harga_masuk').val(total.toLocaleString('id-ID'));
+});
+
+$('#tambahBahanMasukModal').on('hidden.bs.modal', function () {
+    $('#editMasukModal .modal-content').removeClass('modal-blur');
+});
+
+// Simpan bahan masuk baru langsung ke DB
+$('#btnSimpanTambahBahanMasuk').on('click', function() {
+    const bahanId = $('#bahan_bakumasuk').val();
+    const bahanNama = $('#bahan_bakumasuk option:selected').text();
+    const jumlah = $('#jumlahmasuk').val();
+    const hargaSatuan = $('#bahan_bakumasuk option:selected').data('harga') || 0;
+    const total = hargaSatuan * parseFloat(jumlah || 0);
+    const idTransaksi = $('#id_transaksi').val();
+
+    if (!bahanId || !jumlah) {
+        Swal.fire('Peringatan!', 'Mohon lengkapi semua data.', 'warning');
+        return;
+    }
+
+    // Kirim data via AJAX ke controller Laravel
+    $.ajax({
+        url: '/gudang/riwayat/tambah-bahanmasuk', // route Laravel untuk simpan
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            id_transaksi: idTransaksi,
+            id_bahanbaku: bahanId,
+            jumlah: jumlah,
+            total: total
+        },
+        success: function(response) {
+            if (response.success) {
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Bahan masuk berhasil disimpan.',
+                    icon: 'success',
+                    confirmButtonColor: '#198754',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Tutup modal tambah
+                    $('#tambahBahanMasukModal').modal('hide');
+                    // Refresh halaman
+                    location.reload();
+                });
+
+                // Reset form
+                $('#formTambahBahanMasuk')[0].reset();
+            } else {
+                Swal.fire('Gagal!', response.message || 'Terjadi kesalahan saat menyimpan data.', 'error');
+            }
+        },
+        error: function(xhr) {
+            Swal.fire('Gagal!', 'Terjadi kesalahan server saat menyimpan data.', 'error');
+        }
+    });
+});
+
+    // === TOMBOL EDIT (Dummy) ===
+$(document).on('click', '.btn-edit-masuk', function() {
+    const idTransaksi = $(this).data('id');
+
+    $.ajax({
+        url: `/gudang/riwayat/editmasuk/${idTransaksi}`,
+        type: 'GET',
+        success: function(response) {
+            if (response && response.length > 0) {
+                // Kosongkan kontainer sebelumnya
+                $('#list-bahan-container-masuk').empty();
+
+                $('#id_transaksi').val(idTransaksi);
+                // Loop setiap data bahan
+                response.forEach((item, index) => {
+                    const html = `
+                        <div class="border rounded p-3 mb-3">
+                            <h6 class="fw-bold text-warning mb-3">Bahan ke-${index + 1}</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Nama Bahan</label>
+                                <input type="text" class="form-control" style="background-color:rgb(212, 212, 212);" name="nama_bahan[]" value="${item.nama_bahan}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Jumlah</label>
+                                <input type="number" class="form-control input-jual" name="jumlah[]" value="${item.jumlah}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Total Harga</label>
+                                <input type="number" class="form-control input-harga" style="background-color:rgb(212, 212, 212);" name="harga[]" value="${item.harga_jual * item.jumlah}" data-harga-awal="${item.harga_jual}" readonly>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm btn-hapus-bahanmasuk" data-id="${item.id_pemasukan}">
+                                <i class="bi bi-trash"></i> Hapus Transaksi Bahan baku ke-${index + 1}
+                            </button>
+                        </div>
+                    `;
+                    $('#list-bahan-container-masuk').append(html);
+                });
+
+                // Tampilkan modal
+                $('#editMasukModal').modal('show');
+            } else {
+                Swal.fire('Oops!', 'Data tidak ditemukan', 'warning');
+            }
+        },
+        error: function() {
+            Swal.fire('Gagal!', 'Gagal memuat data pengeluaran.', 'error');
+        }
+    });
+});
+
+$(document).on('click', '.btn-delete-transaksimasuk', function() {
+    const idTransaksi = $(this).data('id');
+    const row = $(this).closest('tr');
+
+    Swal.fire({
+        title: 'Yakin ingin menghapus?',
+        text: 'Data transaksi dan bahan yang masuk akan dihapus secara permanen!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, hapus',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/gudang/riwayatmasuk/hapus/' + idTransaksi,
+                type: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire('Dihapus!', 'Data berhasil dihapus.', 'success');
+                        row.remove(); // hapus baris di tabel tanpa reload
+                    } else {
+                        Swal.fire('Gagal!', response.message || 'Gagal menghapus data.', 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Gagal!', 'Terjadi kesalahan saat menghapus.', 'error');
+                }
+            });
+        }
+    });
 });
 </script>
 @endsection

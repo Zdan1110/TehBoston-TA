@@ -495,7 +495,6 @@ $riwayatkeluar = DB::table('tb_transaksi')
     ->orderBy('created_at', 'desc')
     ->get();
 
-
     // Total uang masuk dari transaksi pengeluaran
     $totalUangMasuk = DB::table('tb_transaksi')
     ->where('jenis_transaksi', '=', 'Pengeluaran')
@@ -504,6 +503,7 @@ $riwayatkeluar = DB::table('tb_transaksi')
     })
     ->sum('total');
 
+    $bahanbaku = DB::table('tb_bahanbaku')->get();
 
     return view('gudang.riwayat', compact(
         'riwayatmasuk',
@@ -513,8 +513,672 @@ $riwayatkeluar = DB::table('tb_transaksi')
         'from',
         'to',
         'keywordMasuk',
-        'keywordKeluar'
+        'keywordKeluar',
+        'bahanbaku'
     ));
+}
+
+public function Editmasuk($id)
+{
+    $data = DB::table('tb_transaksi')
+        ->join('tb_pemasukan', 'tb_pemasukan.id_transaksi', '=', 'tb_transaksi.id_transaksi')
+        ->leftJoin('tb_bahanbaku', 'tb_pemasukan.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+        ->select(
+            'tb_bahanbaku.id_bahanbaku',
+            'tb_bahanbaku.nama_bahan',
+            'tb_bahanbaku.harga_jual',
+            'tb_pemasukan.id_pemasukan',
+            'tb_pemasukan.jumlah',
+            'tb_pemasukan.harga',
+            'tb_bahanbaku.satuan',
+            'tb_transaksi.total',
+            'tb_pemasukan.created_at',
+            'tb_pemasukan.updated_at'
+        )
+        ->where('tb_transaksi.jenis_transaksi', '=', 'Pemasukan')
+        ->where('tb_transaksi.id_transaksi', '=', $id)
+        ->get();
+    
+    Log::info('Data modal:', ['data' => $id]);
+    // Kembalikan JSON untuk AJAX
+    return response()->json($data);
+}
+
+public function hapusmasuk($id)
+{
+    try {
+        Log::info('Menghapus id_pemasukan: ' . $id);
+        $id_transaksi = DB::table('tb_pemasukan')
+                            ->where('id_pemasukan', $id)
+                            ->select('id_transaksi', 'harga', 'id_bahanbaku', 'jumlah')
+                            ->first();
+        
+        $totalsekarang = DB::table('tb_transaksi')
+                            ->where('id_transaksi', $id_transaksi->id_transaksi)
+                            ->select('total')
+                            ->first();
+        
+        $totalupdate = $totalsekarang->total - $id_transaksi->harga;
+
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $id_transaksi->id_transaksi)
+            ->update([
+                'total' => $totalupdate,
+                'tanggal_transaksi' => now(),
+            ]);
+
+        DB::table('tb_laporanstok')
+            ->where('id_bahanbaku', $id_transaksi->id_bahanbaku)
+            ->whereMonth('tanggal', Carbon::now()->month)
+            ->whereYear('tanggal', Carbon::now()->year)
+            ->update([
+                'barang_masuk' => DB::raw("barang_masuk - $id_transaksi->jumlah"),
+                'stok_akhir' => DB::raw("stok_akhir - $id_transaksi->jumlah"),
+        ]);
+
+        DB::table('tb_pemasukan')->where('id_pemasukan', $id)->delete();
+
+        $data = DB::table('tb_pemasukan')
+            ->join('tb_bahanbaku', 'tb_pemasukan.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->join('tb_supplier', 'tb_bahanbaku.id_supplier', '=', 'tb_supplier.id_supplier')
+            ->where('tb_pemasukan.id_transaksi', $id_transaksi->id_transaksi)
+            ->select(
+                'tb_pemasukan.*',
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan',
+                'tb_supplier.nama_supplier'
+            )
+            ->get();
+
+        $total = DB::table('tb_transaksi')
+                ->where('id_transaksi', '=', $id_transaksi->id_transaksi)
+                ->first();
+
+
+        $header = $data->first(); // untuk keperluan header nota
+        
+        // 🔹 Generate PDF dari view yang sama
+        $pdf = Pdf::loadView('gudang.nota_masuk', compact('data', 'header', 'total'))
+            ->setPaper([0, 0, 226.77, 600], 'portrait'); // ukuran thermal 80mm
+    
+        // 🔹 Simpan file PDF ke folder public/uploads/nota
+        $filename = 'nota_' . $id_transaksi->id_transaksi . '.pdf';
+        $path = public_path('uploads/strukdc/' . $filename);
+        $pdf->save($path);
+        
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        Log::error('Error hapuskeluar: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
+public function updatemasuk(Request $request)
+{
+    try {
+        $datas = $request->input('data');
+
+        Log::info('Isi variabel $datas:', ['data' => $datas]);
+
+        if (!is_array($datas) || empty($datas)) {
+            return response()->json(['error' => 'Tidak ada data untuk diperbarui.'], 400);
+        }
+
+        $grandTotal = 0;
+
+        foreach ($datas as $item) {
+            try {
+                $total = floatval($item['total']);
+                $jumlahinput = floatval($item['jumlah']);
+                $grandTotal += $total;
+
+                $jumlahasal = DB::table('tb_pemasukan')
+                                ->where('id_pemasukan', $item['id_pemasukan'])
+                                ->select('jumlah', 'id_bahanbaku')
+                                ->first();
+
+                if ($jumlahasal->jumlah < $jumlahinput)
+                {
+                    $jumlahupdate = $jumlahinput - $jumlahasal->jumlah;
+
+                    DB::table('tb_laporanstok')
+                        ->where('id_bahanbaku', $jumlahasal->id_bahanbaku)
+                        ->whereMonth('tanggal', Carbon::now()->month)
+                        ->whereYear('tanggal', Carbon::now()->year)
+                        ->update([
+                            'barang_masuk' => DB::raw("barang_masuk + $jumlahupdate"),
+                            'stok_akhir' => DB::raw("stok_akhir + $jumlahupdate"),
+                        ]);
+                } elseif ($jumlahasal->jumlah > $jumlahinput){
+                    $jumlahupdate = $jumlahasal->jumlah - $jumlahinput;
+
+                    DB::table('tb_laporanstok')
+                        ->where('id_bahanbaku', $jumlahasal->id_bahanbaku)
+                        ->whereMonth('tanggal', Carbon::now()->month)
+                        ->whereYear('tanggal', Carbon::now()->year)
+                        ->update([
+                            'barang_masuk' => DB::raw("barang_masuk - $jumlahupdate"),
+                            'stok_akhir' => DB::raw("stok_akhir - $jumlahupdate"),
+                        ]);
+                }
+
+                DB::table('tb_pemasukan')
+                    ->where('id_pemasukan', $item['id_pemasukan'])
+                    ->update([
+                        'jumlah' => $item['jumlah'],
+                        'harga' => $item['total'],
+                        'updated_at' => now()
+                    ]);
+
+                Log::info('updateMasuk: Data pemasukan berhasil diupdate.', [
+                    'id_pemasukan' => $item['id_pemasukan'],
+                    'jumlah' => $item['jumlah'],
+                    'harga' => $total
+                    ]);
+
+            } catch (\Exception $e) {
+                Log::error('updateMasuk: Gagal update tb_pemasukan.', [
+                    'id_pemasukan' => $item['id_pemasukan'],
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $datas[0]['id_transaksi'])
+            ->update([
+                'total' => $grandTotal,
+                'tanggal_transaksi' => now()
+            ]);
+
+            $data = DB::table('tb_pemasukan')
+            ->join('tb_bahanbaku', 'tb_pemasukan.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->join('tb_supplier', 'tb_bahanbaku.id_supplier', '=', 'tb_supplier.id_supplier')
+            ->where('tb_pemasukan.id_transaksi', $datas[0]['id_transaksi'])
+            ->select(
+                'tb_pemasukan.*',
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan',
+                'tb_supplier.nama_supplier'
+            )
+            ->get();
+
+        $total = DB::table('tb_transaksi')
+                ->where('id_transaksi', '=', $datas[0]['id_transaksi'])
+                ->first();
+
+
+        $header = $data->first(); // untuk keperluan header nota
+        
+        // 🔹 Generate PDF dari view yang sama
+        $pdf = Pdf::loadView('gudang.nota_masuk', compact('data', 'header', 'total'))
+            ->setPaper([0, 0, 226.77, 600], 'portrait'); // ukuran thermal 80mm
+    
+        // 🔹 Simpan file PDF ke folder public/uploads/nota
+        $filename = 'nota_' . $datas[0]['id_transaksi'] . '.pdf';
+        $path = public_path('uploads/strukdc/' . $filename);
+        $pdf->save($path);
+
+        Log::info('updateMasuk: PDF berhasil dibuat.', ['path' => $path]);
+
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        Log::error('updateMasuk: Terjadi kesalahan fatal.', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['error' => 'Terjadi kesalahan saat memperbarui data.'], 500);
+    }
+    
+}
+
+public function tambahBahanMasuk(Request $request)
+{
+    $request->validate([
+        'id_transaksi' => 'required|exists:tb_transaksi,id_transaksi',
+        'id_bahanbaku' => 'required|exists:tb_bahanbaku,id_bahanbaku',
+        'jumlah' => 'required|numeric|min:1',
+        'total' => 'required|numeric|min:0',
+    ]);
+
+    try {
+        $last = DB::table('tb_pemasukan')->orderBy('id_pemasukan', 'desc')->first();
+        $lastId = $last ? intval(substr($last->id_pemasukan, 1)) : 0;
+        $newId = 'M' . str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
+
+        $idPengeluaran = DB::table('tb_pemasukan')->insert([
+            'id_pemasukan' => $newId,
+            'id_transaksi' => $request->id_transaksi,
+            'id_bahanbaku' => $request->id_bahanbaku,
+            'jumlah' => $request->jumlah,
+            'harga' => $request->total,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $request->id_transaksi)
+            ->update([
+                'total' => DB::raw("total + $request->total"),
+                'tanggal_transaksi' => now()
+            ]);
+        
+        DB::table('tb_laporanstok')
+            ->where('id_bahanbaku', $request->id_bahanbaku)
+            ->whereMonth('tanggal', Carbon::now()->month)
+            ->whereYear('tanggal', Carbon::now()->year)
+            ->update([
+                'barang_masuk' => DB::raw("barang_masuk + $request->jumlah"),
+                'stok_akhir' => DB::raw("stok_akhir + $request->jumlah"),
+            ]);
+
+            $data = DB::table('tb_pemasukan')
+            ->join('tb_bahanbaku', 'tb_pemasukan.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->join('tb_supplier', 'tb_bahanbaku.id_supplier', '=', 'tb_supplier.id_supplier')
+            ->where('tb_pemasukan.id_transaksi', $request->id_transaksi)
+            ->select(
+                'tb_pemasukan.*',
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan',
+                'tb_supplier.nama_supplier'
+            )
+            ->get();
+
+        $total = DB::table('tb_transaksi')
+                ->where('id_transaksi', '=', $request->id_transaksi)
+                ->first();
+
+
+        $header = $data->first(); // untuk keperluan header nota
+        
+        // 🔹 Generate PDF dari view yang sama
+        $pdf = Pdf::loadView('gudang.nota_masuk', compact('data', 'header', 'total'))
+            ->setPaper([0, 0, 226.77, 600], 'portrait'); // ukuran thermal 80mm
+    
+        // 🔹 Simpan file PDF ke folder public/uploads/nota
+        $filename = 'nota_' . $request->id_transaksi . '.pdf';
+        $path = public_path('uploads/strukdc/' . $filename);
+        $pdf->save($path);
+
+        return response()->json([
+            'success' => true,
+            'id_pemasukan' => $idPengeluaran
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+public function Editkeluar($id)
+{
+    $data = DB::table('tb_transaksi')
+        ->join('tb_pengeluaran', 'tb_pengeluaran.id_transaksi', '=', 'tb_transaksi.id_transaksi')
+        ->leftJoin('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+        ->leftJoin('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
+        ->select(
+            'tb_transaksi.id_transaksi',
+            'tb_transaksi.tanggal_transaksi',
+            'tb_transaksi.struk',
+            'tb_bahanbaku.id_bahanbaku',
+            'tb_bahanbaku.nama_bahan',
+            'tb_bahanbaku.harga_jual',
+            'tb_pengeluaran.id_pengeluaran',
+            'tb_pengeluaran.jumlah',
+            'tb_pengeluaran.harga',
+            'tb_bahanbaku.satuan',
+            'tb_franchise.nama_franchise',
+            'tb_franchise.alamat_usaha',
+            'tb_transaksi.total',
+            'tb_pengeluaran.created_at',
+            'tb_pengeluaran.updated_at'
+        )
+        ->where('tb_transaksi.jenis_transaksi', '=', 'Pengeluaran')
+        ->where('tb_transaksi.id_transaksi', '=', $id)
+        ->get();
+
+    // Kembalikan JSON untuk AJAX
+    return response()->json($data);
+}
+
+public function hapuskeluar($id)
+{
+    try {
+        Log::info('Menghapus id_pengeluaran: ' . $id);
+        $id_transaksi = DB::table('tb_pengeluaran')
+                            ->where('id_pengeluaran', $id)
+                            ->select('id_transaksi', 'harga', 'id_bahanbaku', 'jumlah')
+                            ->first();
+        
+        $totalsekarang = DB::table('tb_transaksi')
+                            ->where('id_transaksi', $id_transaksi->id_transaksi)
+                            ->select('total')
+                            ->first();
+        
+        $totalupdate = $totalsekarang->total - $id_transaksi->harga;
+
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $id_transaksi->id_transaksi)
+            ->update([
+                'total' => $totalupdate,
+                'tanggal_transaksi' => now(),
+            ]);
+
+        DB::table('tb_laporanstok')
+            ->where('id_bahanbaku', $id_transaksi->id_bahanbaku)
+            ->whereMonth('tanggal', Carbon::now()->month)
+            ->whereYear('tanggal', Carbon::now()->year)
+            ->update([
+                'barang_keluar' => DB::raw("barang_keluar - $id_transaksi->jumlah"),
+                'stok_akhir' => DB::raw("stok_akhir + $id_transaksi->jumlah"),
+        ]);
+
+        DB::table('tb_pengeluaran')->where('id_pengeluaran', $id)->delete();
+
+        $data = DB::table('tb_pengeluaran')
+            ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->join('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
+            ->where('tb_pengeluaran.id_transaksi', $id_transaksi->id_transaksi)
+            ->select(
+                'tb_pengeluaran.*',
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan',
+                'tb_franchise.nama_franchise',
+                'tb_franchise.alamat_usaha'
+            )
+            ->get();
+
+        $total = DB::table('tb_transaksi')
+                ->where('id_transaksi', '=', $id_transaksi->id_transaksi)
+                ->first();
+                
+
+        $header = $data->first(); // untuk keperluan header nota
+        
+        // 🔹 Generate PDF dari view yang sama
+        $pdf = Pdf::loadView('gudang.nota_keluar', compact('data', 'header', 'total'))
+            ->setPaper([0, 0, 226.77, 600], 'portrait'); // ukuran thermal 80mm
+
+        // 🔹 Simpan file PDF ke folder public/uploads/nota
+        $filename = 'nota_' . $id_transaksi->id_transaksi . '.pdf';
+        $path = public_path('uploads/strukdc/' . $filename);
+        $pdf->save($path);
+        
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        Log::error('Error hapuskeluar: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
+public function updatekeluar(Request $request)
+{
+    try {
+        $datas = $request->input('data');
+
+        Log::info('Isi variabel $datas:', ['data' => $datas]);
+
+        if (!is_array($datas) || empty($datas)) {
+            return response()->json(['error' => 'Tidak ada data untuk diperbarui.'], 400);
+        }
+
+        $grandTotal = 0;
+
+        foreach ($datas as $item) {
+            try {
+                $total = floatval($item['total']);
+                $jumlahinput = floatval($item['jumlah']);
+                $grandTotal += $total;
+
+                $jumlahasal = DB::table('tb_pengeluaran')
+                                ->where('id_pengeluaran', $item['id_pengeluaran'])
+                                ->select('jumlah', 'id_bahanbaku')
+                                ->first();
+
+                if ($jumlahasal->jumlah < $jumlahinput)
+                {
+                    $jumlahupdate = $jumlahinput - $jumlahasal->jumlah;
+
+                    DB::table('tb_laporanstok')
+                        ->where('id_bahanbaku', $jumlahasal->id_bahanbaku)
+                        ->whereMonth('tanggal', Carbon::now()->month)
+                        ->whereYear('tanggal', Carbon::now()->year)
+                        ->update([
+                            'barang_keluar' => DB::raw("barang_keluar + $jumlahupdate"),
+                            'stok_akhir' => DB::raw("stok_akhir - $jumlahupdate"),
+                        ]);
+                } elseif ($jumlahasal->jumlah > $jumlahinput){
+                    $jumlahupdate = $jumlahasal->jumlah - $jumlahinput;
+
+                    DB::table('tb_laporanstok')
+                        ->where('id_bahanbaku', $jumlahasal->id_bahanbaku)
+                        ->whereMonth('tanggal', Carbon::now()->month)
+                        ->whereYear('tanggal', Carbon::now()->year)
+                        ->update([
+                            'barang_keluar' => DB::raw("barang_keluar - $jumlahupdate"),
+                            'stok_akhir' => DB::raw("stok_akhir + $jumlahupdate"),
+                        ]);
+                }
+
+                DB::table('tb_pengeluaran')
+                    ->where('id_pengeluaran', $item['id_pengeluaran'])
+                    ->update([
+                        'jumlah' => $item['jumlah'],
+                        'harga' => $item['total'],
+                        'updated_at' => now()
+                    ]);
+
+                Log::info('updateKeluar: Data pengeluaran berhasil diupdate.', [
+                    'id_pengeluaran' => $item['id_pengeluaran'],
+                    'jumlah' => $item['jumlah'],
+                    'harga' => $total
+                    ]);
+
+            } catch (\Exception $e) {
+                Log::error('updateKeluar: Gagal update tb_pengeluaran.', [
+                    'id_pengeluaran' => $item['id_pengeluaran'],
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $datas[0]['id_transaksi'])
+            ->update([
+                'total' => $grandTotal,
+                'tanggal_transaksi' => now()
+            ]);
+
+        $data = DB::table('tb_pengeluaran')
+            ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->join('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
+            ->where('tb_pengeluaran.id_transaksi', $datas[0]['id_transaksi'])
+            ->select(
+                'tb_pengeluaran.*',
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan',
+                'tb_franchise.nama_franchise',
+                'tb_franchise.alamat_usaha'
+            )
+            ->get();
+
+        $total = DB::table('tb_transaksi')
+                ->where('id_transaksi', '=', $datas[0]['id_transaksi'])
+                ->first();
+                
+
+        $header = $data->first(); // untuk keperluan header nota
+        
+        // 🔹 Generate PDF dari view yang sama
+        $pdf = Pdf::loadView('gudang.nota_keluar', compact('data', 'header', 'total'))
+            ->setPaper([0, 0, 226.77, 600], 'portrait'); // ukuran thermal 80mm
+
+        // 🔹 Simpan file PDF ke folder public/uploads/nota
+        $filename = 'nota_' . $datas[0]['id_transaksi'] . '.pdf';
+        $path = public_path('uploads/strukdc/' . $filename);
+        $pdf->save($path);
+
+        Log::info('updateKeluar: PDF berhasil dibuat.', ['path' => $path]);
+
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        Log::error('updateKeluar: Terjadi kesalahan fatal.', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['error' => 'Terjadi kesalahan saat memperbarui data.'], 500);
+    }
+    
+}
+
+public function tambahBahanKeluar(Request $request)
+{
+    $request->validate([
+        'id_transaksi' => 'required|exists:tb_transaksi,id_transaksi',
+        'id_bahanbaku' => 'required|exists:tb_bahanbaku,id_bahanbaku',
+        'jumlah' => 'required|numeric|min:1',
+        'total' => 'required|numeric|min:0',
+    ]);
+
+    try {
+        $last = DB::table('tb_pengeluaran')->orderBy('id_pengeluaran', 'desc')->first();
+        $lastId = $last ? intval(substr($last->id_pengeluaran, 1)) : 0;
+        $newId = 'K' . str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
+        $idfranchise = DB::table('tb_pengeluaran')
+                        ->where('id_transaksi', $request->id_transaksi)
+                        ->select('id_franchise')
+                        ->first();
+
+        $idPengeluaran = DB::table('tb_pengeluaran')->insert([
+            'id_pengeluaran' => $newId,
+            'id_transaksi' => $request->id_transaksi,
+            'id_franchise' => $idfranchise->id_franchise,
+            'id_bahanbaku' => $request->id_bahanbaku,
+            'jumlah' => $request->jumlah,
+            'harga' => $request->total,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $request->id_transaksi)
+            ->update([
+                'total' => DB::raw("total + $request->total"),
+                'tanggal_transaksi' => now()
+            ]);
+        
+        DB::table('tb_laporanstok')
+            ->where('id_bahanbaku', $request->id_bahanbaku)
+            ->whereMonth('tanggal', Carbon::now()->month)
+            ->whereYear('tanggal', Carbon::now()->year)
+            ->update([
+                'barang_keluar' => DB::raw("barang_keluar + $request->jumlah"),
+                'stok_akhir' => DB::raw("stok_akhir - $request->jumlah"),
+            ]);
+
+        $data = DB::table('tb_pengeluaran')
+            ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->join('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
+            ->where('tb_pengeluaran.id_transaksi', $request->id_transaksi)
+            ->select(
+                'tb_pengeluaran.*',
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan',
+                'tb_franchise.nama_franchise',
+                'tb_franchise.alamat_usaha'
+            )
+            ->get();
+
+        $total = DB::table('tb_transaksi')
+                ->where('id_transaksi', '=', $request->id_transaksi)
+                ->first();
+                
+
+        $header = $data->first(); // untuk keperluan header nota
+        
+        // 🔹 Generate PDF dari view yang sama
+        $pdf = Pdf::loadView('gudang.nota_keluar', compact('data', 'header', 'total'))
+            ->setPaper([0, 0, 226.77, 600], 'portrait'); // ukuran thermal 80mm
+
+        // 🔹 Simpan file PDF ke folder public/uploads/nota
+        $filename = 'nota_' . $request->id_transaksi . '.pdf';
+        $path = public_path('uploads/strukdc/' . $filename);
+        $pdf->save($path);
+
+        return response()->json([
+            'success' => true,
+            'id_pengeluaran' => $idPengeluaran
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+public function hapusTransaksi($id)
+{
+    try {
+        $idbahan = DB::table('tb_pengeluaran')
+                    ->where('id_transaksi', $id)
+                    ->select('id_bahanbaku', 'jumlah')
+                    ->get();
+
+        foreach ($idbahan as $bahan) {
+            DB::table('tb_laporanstok')
+                ->where('id_bahanbaku', $bahan->id_bahanbaku)
+                ->whereMonth('tanggal', Carbon::now()->month)
+                ->whereYear('tanggal', Carbon::now()->year)
+                ->update([
+                    'barang_keluar' => DB::raw("barang_keluar - {$bahan->jumlah}"),
+                    'stok_akhir' => DB::raw("stok_akhir + {$bahan->jumlah}"),
+                ]);
+        }
+
+        // Jika ingin, juga hapus semua bahan terkait dari tb_pengeluaran
+        DB::table('tb_pengeluaran')->where('id_transaksi', $id)->delete();
+
+        // Hapus berdasarkan id_transaksi
+        DB::table('tb_transaksi')->where('id_transaksi', $id)->delete();
+
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+public function hapusTransaksimasuk($id)
+{
+    try {
+        $idbahan = DB::table('tb_pemasukan')
+                    ->where('id_transaksi', $id)
+                    ->select('id_bahanbaku', 'jumlah')
+                    ->get();
+
+        foreach ($idbahan as $bahan) {
+            DB::table('tb_laporanstok')
+                ->where('id_bahanbaku', $bahan->id_bahanbaku)
+                ->whereMonth('tanggal', Carbon::now()->month)
+                ->whereYear('tanggal', Carbon::now()->year)
+                ->update([
+                    'barang_masuk' => DB::raw("barang_masuk - {$bahan->jumlah}"),
+                    'stok_akhir' => DB::raw("stok_akhir - {$bahan->jumlah}"),
+                ]);
+        }
+
+        // Jika ingin, juga hapus semua bahan terkait dari tb_pengeluaran
+        DB::table('tb_pemasukan')->where('id_transaksi', $id)->delete();
+
+        // Hapus berdasarkan id_transaksi
+        DB::table('tb_transaksi')->where('id_transaksi', $id)->delete();
+
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()]);
+    }
 }
 
     public function dataSupplier()

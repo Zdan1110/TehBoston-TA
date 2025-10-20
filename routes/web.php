@@ -253,6 +253,16 @@ Route::middleware(['auth', 'gudang.only'])->prefix('gudang')->group(function () 
     Route::get('/keluar', function() { return view('gudang.keluar'); });
     Route::get('/stok', [GudangController::class, 'laporanstok'])->name('laporan.stok');
     Route::get('/riwayat', [GudangController::class, 'riwayatgudang'])->name('riwayat.gudang');
+    Route::get('/riwayat/editkeluar/{id}', [GudangController::class, 'Editkeluar']);
+    Route::get('/riwayat/editmasuk/{id}', [GudangController::class, 'Editmasuk']);
+    Route::delete('/riwayat/hapus-bahankeluar/{id}', [GudangController::class, 'hapuskeluar']);
+    Route::delete('/riwayat/hapus-bahanmasuk/{id}', [GudangController::class, 'hapusmasuk']);
+    Route::post('/riwayat/updatekeluar', [GudangController::class, 'updatekeluar'])->name('riwayatkeluar.update');
+    Route::post('/riwayat/updatemasuk', [GudangController::class, 'updatemasuk'])->name('riwayatmasuk.update');
+    Route::post('/riwayat/tambah-bahankeluar', [GudangController::class, 'tambahBahanKeluar']);
+    Route::post('/riwayat/tambah-bahanmasuk', [GudangController::class, 'tambahBahanMasuk']);
+    Route::delete('/riwayat/hapus/{id}', [GudangController::class, 'hapusTransaksi'])->name('riwayat.hapus');
+    Route::delete('/riwayatmasuk/hapus/{id}', [GudangController::class, 'hapusTransaksimasuk'])->name('riwayatmasuk.hapus');
     Route::get('/datasupplier', [GudangController::class, 'dataSupplier'])->name('gudang.datasupplier');
     Route::get('/bahan/edit/{id_bahan}/{id_supplier}', [GudangController::class, 'editbahan'])->name('edit.bahan');
     Route::post('/bahan/update/{id_bahan}/{id_supplier}', [GudangController::class, 'updatebahan'])->name('update.bahan');
