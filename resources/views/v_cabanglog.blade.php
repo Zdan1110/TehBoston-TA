@@ -331,7 +331,7 @@
         }
     </style>
 
-    <div class="branch-content">
+    <div class="branch-content"  style="margin-top: 40px">
         <h2 class="section-title">Cabang Kami</h2>
         
         <div class="content-wrapper">
