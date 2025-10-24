@@ -138,6 +138,15 @@ Laporan
     <button type="button" onclick="cetakPDF()">Cetak PDF</button>
   </div>
 
+      @php
+  $totalKeseluruhan = collect($penjualan)->sum('harga');
+@endphp
+
+<div style="text-align:right; margin-top:10px; font-weight:bold;">
+  Total Keseluruhan: Rp{{ number_format($totalKeseluruhan, 0, ',', '.') }}
+</div>
+
+
   {{-- 🔹 TABEL --}}
   @if(!empty($penjualan) && count($penjualan) > 0)
     <table class="history-table">
