@@ -334,7 +334,7 @@
                 <i class="fas fa-mug-hot" style="color:black"></i>
             </div>
             <h1>TEH BOSTON</h1>
-            <p>Jl. Anggrek No. 56, Jakarta Selatan | Telp: (021) 5678-9012</p>
+            <p>Jl. MT. Haryono Gang Abimanyu Blok Sekarjaya. Kel. Cigadung Kec. Subang | Telp: +62 8514-1606-776</p>
         </div>
         
         @php

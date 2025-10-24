@@ -162,45 +162,72 @@ class KasirController extends Controller
         return view('kasir.v_kasir', compact('kasir', 'riwayat', 'bestSellers'));
        
     }
+    
 public function laporan(Request $request)
 {
     $bulan = $request->input('bulan');
     $tahun = $request->input('tahun');
+    $tanggal = $request->input('tanggal');
+    $minggu = $request->input('minggu');
 
-    // default bulan & tahun realtime (saat ini) kalau kosong
-    if (!$bulan) {
-        $bulan = date('m');
-    }
-    if (!$tahun) {
-        $tahun = date('Y');
-    }
+    if (!$bulan) $bulan = date('m');
+    if (!$tahun) $tahun = date('Y');
 
     $model = new M_Kasir();
     $user = Session::get('user');
     if (!$user || !isset($user['id_akun'])) {
         return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
     }
-    $id_akun = Session::get('user')['id_akun'];
-    $type_akun = Session::get('user')['type_akun'];
 
-    if ($type_akun == 'kasir')
-    {
-    $idFranchise = DB::table('tb_kasir')
-        ->join('tb_franchise', 'tb_kasir.id_franchise', '=', 'tb_franchise.id_franchise')
-        ->where('tb_kasir.id_akun', $id_akun)
-        ->select('tb_franchise.id_franchise')
-        ->first();
+    $id_akun = $user['id_akun'];
+    $type_akun = $user['type_akun'];
 
-    $id_franchise = $idFranchise->id_franchise;
-    } elseif ($type_akun == 'user')
-    {
-        $id_franchise = Session::get('user')['id_franchise'];
+    // Ambil id_franchise sesuai tipe akun
+    if ($type_akun == 'kasir') {
+        $franchiseData = DB::table('tb_kasir')
+            ->join('tb_franchise', 'tb_kasir.id_franchise', '=', 'tb_franchise.id_franchise')
+            ->where('tb_kasir.id_akun', $id_akun)
+            ->select('tb_franchise.id_franchise', 'tb_franchise.nama_franchise')
+            ->first();
+
+        $id_franchise = $franchiseData->id_franchise;
+        $nama_franchise = $franchiseData->nama_franchise;
+    } else {
+        $id_franchise = $user['id_franchise'];
+        $franchiseData = DB::table('tb_franchise')
+            ->where('id_franchise', $id_franchise)
+            ->select('nama_franchise')
+            ->first();
+        $nama_franchise = $franchiseData->nama_franchise ?? 'Franchise';
     }
 
-    // pakai filter bulan & tahun
-    $penjualan = $model->DataLaporanFilterBulanTahun($id_franchise, $bulan, $tahun);
+    // Filter data penjualan
+    if ($tanggal) {
+        $penjualan = DB::table('tb_detailpenjualan as dp')
+            ->join('tb_penjualan as p', 'dp.id_penjualan', '=', 'p.id_penjualan')
+            ->where('p.id_franchise', $id_franchise)
+            ->whereDate('p.tanggal', '=', $tanggal)
+            ->select('p.id_penjualan', 'dp.nama_produk', 'dp.jumlah', 'dp.harga', 'p.tanggal')
+            ->orderBy('p.tanggal', 'desc')
+            ->get();
+    } elseif ($minggu) {
+        [$year, $week] = explode('-W', $minggu);
+        $startOfWeek = Carbon::now()->setISODate($year, $week)->startOfWeek();
+        $endOfWeek = Carbon::now()->setISODate($year, $week)->endOfWeek();
 
-    return view('kasir.v_pelaporan', compact('penjualan', 'bulan', 'tahun', 'type_akun'));
+        $penjualan = DB::table('tb_detailpenjualan as dp')
+            ->join('tb_penjualan as p', 'dp.id_penjualan', '=', 'p.id_penjualan')
+            ->where('p.id_franchise', $id_franchise)
+            ->whereBetween('p.tanggal', [$startOfWeek, $endOfWeek])
+            ->select('p.id_penjualan', 'dp.nama_produk', 'dp.jumlah', 'dp.harga', 'p.tanggal')
+            ->orderBy('p.tanggal', 'desc')
+            ->get();
+    } else {
+        $penjualan = $model->DataLaporanFilterBulanTahun($id_franchise, $bulan, $tahun);
+    }
+
+    // Kirim nama_franchise ke view
+    return view('kasir.v_pelaporan', compact('penjualan', 'bulan', 'tahun', 'type_akun', 'nama_franchise'));
 }
 
     public function checkout(Request $request)
@@ -271,7 +298,7 @@ public function laporan(Request $request)
                 DB::table('tb_penjualan')->insert([
                     'id_penjualan' => $idPenjualan,
                     'id_franchise' => $idFranchise,
-                    'pelanggan' => $request->kode, // This value is inserted here
+                    'pelanggan' => $request->kode, 
                     'harga' => $request->total,
                     'tanggal' => Carbon::now(),
                 ]);

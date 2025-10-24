@@ -103,9 +103,6 @@ Route::post('/uploadbuktifranchise/{id_franchisebaru}', [CalonMitraController::c
         Route::get('/pelaporan', [KasirController::class, 'laporan']);
         Route::get('/print/{id_penjualan}', [KasirController::class, 'print'])->name('printkasir');
         Route::get('/loginkasir/{id_franchise}', [AuthController::class, 'loginkasir']);
-        // Route::get('/kasir/akun', [KasirController::class, 'showakun'])->name('kasirakun');
-        // Route::get('/kasir/akun/edit/{id_akun}', [KasirController::class, 'editakun'])->name('editakun');
-        // Route::post('/kasir/akun/update/{id_akun}', [KasirController::class, 'updateakun'])->name('updateakun');
         Route::get('/printescpos/{id_penjualan}', [C_Print::class, 'printStruk']);
         Route::get('/pelaporan/delete/{id_penjualan}', [KasirController::class, 'destroy'])->name('kasir.destroy');
 

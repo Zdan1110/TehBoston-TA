@@ -243,39 +243,87 @@ function updateTotalPenjualan() {
   document.getElementById("total").textContent = `Total: Rp${total.toLocaleString("id-ID")}`;
 }
 
-function cetakPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const title = "Histori Penjualan - Teh Boston";
-  const headers = [["No", "Menu", "Total Harga", "Waktu"]];
-  const rows = [];
+  function cetakPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-  const tableRows = document.querySelectorAll(".history-table tbody tr");
+    // Judul utama PDF
+    const title = "Histori Penjualan - Teh Boston";
 
+    // Ambil parameter dari URL
+    const params = new URLSearchParams(window.location.search);
+    const tipe = params.get("tipe_filter");
+    const tanggal = params.get("tanggal");
+    const minggu = params.get("minggu");
+    const bulan = params.get("bulan");
+    const tahun = params.get("tahun");
 
-  tableRows.forEach(row => {
-    const cols = row.querySelectorAll("td");
-    rows.push([
-      cols[0].innerText,
-      cols[1].innerText,
-      cols[2].innerText,
-      cols[3].innerText
-    ]);
-  });
+    // Tentukan nama file & teks filter
+    let fileName = "Laporan_Penjualan_";
+    let filterText = "Filter: ";
 
-  doc.setFontSize(14);
-  doc.text(title, 20, 20);
+    if (tipe === "harian" && tanggal) {
+      fileName += `Tanggal_${tanggal}`;
+      const tanggalText = new Date(tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+      filterText += `Harian – ${tanggalText}`;
+    } else if (tipe === "mingguan" && minggu) {
+      const parts = minggu.split("-W");
+      const tahunMinggu = parts[0];
+      const mingguKe = parts[1];
+      fileName += `Minggu_${mingguKe}_${tahunMinggu}`;
+      filterText += `Mingguan – Minggu ke-${mingguKe}, Tahun ${tahunMinggu}`;
+    } else if (tipe === "bulanan" && bulan && tahun) {
+      const bulanNama = new Date(tahun, bulan - 1).toLocaleString("id-ID", { month: "long" });
+      fileName += `Bulan_${bulanNama}_${tahun}`;
+      filterText += `Bulanan – ${bulanNama} ${tahun}`;
+    } else if (tipe === "tahunan" && tahun) {
+      fileName += `Tahun_${tahun}`;
+      filterText += `Tahunan – ${tahun}`;
+    } else {
+      const today = new Date().toISOString().slice(0, 10);
+      fileName += `Tanggal_${today}`;
+      const todayText = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+      filterText += `Harian – ${todayText}`;
+    }
 
-  doc.autoTable({
-    startY: 30,
-    head: headers,
-    body: rows,
-    theme: 'striped',
-    headStyles: { fillColor: [41, 128, 185] },
-  });
+    fileName += ".pdf";
 
-  doc.save("histori-pembelian.pdf");
-}
+    // Ambil data dari tabel
+    const headers = [["No", "Menu", "Total Harga", "Waktu"]];
+    const rows = [];
+    document.querySelectorAll(".history-table tbody tr").forEach((row) => {
+      const cols = row.querySelectorAll("td");
+      rows.push([
+        cols[0].innerText,
+        cols[1].innerText,
+        cols[2].innerText,
+        cols[3].innerText
+      ]);
+    });
+
+    // ====== Mulai isi PDF ======
+    doc.setFontSize(14);
+    doc.text(title, 20, 20);
+
+    doc.setFontSize(11);
+    doc.text(filterText, 20, 28); // tampilkan filter di bawah judul
+
+    doc.autoTable({
+      startY: 35,
+      head: headers,
+      body: rows,
+      theme: 'striped',
+      headStyles: { fillColor: [41, 128, 185] },
+    });
+
+    // Tanggal cetak di bawah
+    const printDate = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    doc.setFontSize(10);
+    doc.text(`Dicetak pada: ${printDate}`, 20, doc.lastAutoTable.finalY + 10);
+
+    // Simpan PDF
+    doc.save(fileName);
+  }
 
 
 window.onload = function () {
