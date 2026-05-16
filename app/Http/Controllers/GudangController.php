@@ -45,8 +45,8 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
                 ->count();
 
         $totalpengeluaran = DB::table('tb_pengeluaran')
-                ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
-                ->where('tb_bahanbaku.jenis_bahan', $data)
+                ->join('tb_paket', 'tb_pengeluaran.id_paket', '=', 'tb_paket.id_paket')
+                ->where('tb_paket.nama_paket', $data)
                 ->count();
             
         $totalbahan = DB::table('tb_bahanbaku')
@@ -113,6 +113,219 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
         $suppliers = DB::table('tb_supplier')->get();
         $bahanbaku = DB::table('tb_bahanbaku')->get();
         return view('gudang.masuk', compact('suppliers', 'bahanbaku'));
+    }
+
+    public function Pesananbahanbaku()
+    {
+        $rows = DB::table('tb_transaksi')
+            ->leftJoin('tb_pengeluaran', 'tb_transaksi.id_transaksi', '=', 'tb_pengeluaran.id_transaksi')
+            ->leftJoin('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
+            ->leftJoin('tb_paket', 'tb_pengeluaran.id_paket', '=', 'tb_paket.id_paket')
+            ->leftJoin('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+            ->leftJoin('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->where('tb_transaksi.jenis_transaksi', 'pengeluaran')
+            ->where('tb_transaksi.status_transaksi', '!=', 'Selesai')
+            ->select(
+                'tb_transaksi.id_transaksi',
+                'tb_transaksi.tanggal_transaksi',
+                'tb_transaksi.total',
+                'tb_transaksi.metode_pembayaran',
+                'tb_transaksi.status_pembayaran',
+                'tb_transaksi.status_transaksi',
+
+                'tb_pengeluaran.id_pengeluaran',
+                'tb_pengeluaran.jumlah as jumlah_paket',
+                'tb_pengeluaran.harga as subtotal_paket',
+
+                'tb_franchise.nama_franchise',
+                'tb_franchise.alamat_usaha',
+
+                'tb_paket.nama_paket',
+
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan',
+                'tb_detailpengeluaran.jumlah as jumlah_bahan'
+            )
+            ->orderBy('tb_transaksi.tanggal_transaksi', 'desc')
+            ->get();
+
+        $pesanan = [];
+
+        foreach ($rows as $row) {
+            $idTransaksi = $row->id_transaksi;
+            $idPengeluaran = $row->id_pengeluaran;
+
+            if (!isset($pesanan[$idTransaksi])) {
+                $pesanan[$idTransaksi] = [
+                    'id_transaksi' => $row->id_transaksi,
+                    'tanggal_transaksi' => $row->tanggal_transaksi,
+                    'total' => $row->total,
+                    'metode_pembayaran' => $row->metode_pembayaran,
+                    'status_pembayaran' => $row->status_pembayaran,
+                    'status_transaksi' => $row->status_transaksi,
+                    'nama_franchise' => $row->nama_franchise,
+                    'alamat_usaha' => $row->alamat_usaha,
+                    'paket' => []
+                ];
+            }
+
+            if ($idPengeluaran && !isset($pesanan[$idTransaksi]['paket'][$idPengeluaran])) {
+                $pesanan[$idTransaksi]['paket'][$idPengeluaran] = [
+                    'nama_paket' => $row->nama_paket,
+                    'jumlah_paket' => $row->jumlah_paket,
+                    'subtotal_paket' => $row->subtotal_paket,
+                    'bahan' => []
+                ];
+            }
+
+            if ($idPengeluaran && $row->nama_bahan) {
+                $pesanan[$idTransaksi]['paket'][$idPengeluaran]['bahan'][] = [
+                    'nama_bahan' => $row->nama_bahan,
+                    'jumlah_bahan' => $row->jumlah_bahan,
+                    'satuan' => $row->satuan,
+                ];
+            }
+        }
+
+        return view('gudang.keluar', compact('pesanan'));
+    }
+
+    public function lunasiPembayaran($id)
+    {
+        try {
+            DB::table('tb_transaksi')
+                ->where('id_transaksi', $id)
+                ->update([
+                    'status_pembayaran' => 'settlement'
+                ]);
+
+            return redirect()->back()->with('success', 'Pembayaran berhasil dilunasi.');
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal melunasi pembayaran.');
+        }
+    }
+
+    public function kirimPesanan($id)
+    {
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $id)
+            ->update([
+                'status_transaksi' => 'Dikirim'
+            ]);
+
+    return redirect()->route('gudang.printnota', $id);
+    }
+
+    public function selesaiPesanan($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $transaksi = DB::table('tb_transaksi')
+                ->where('id_transaksi', $id)
+                ->first();
+
+            if (!$transaksi) {
+                return redirect()->back()->with('error', 'Transaksi tidak ditemukan.');
+            }
+
+            if ($transaksi->status_transaksi == 'Selesai') {
+                return redirect()->back()->with('error', 'Pesanan sudah selesai.');
+            }
+
+            $detailBahan = DB::table('tb_pengeluaran')
+                ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+                ->where('tb_pengeluaran.id_transaksi', $id)
+                ->select(
+                    'tb_pengeluaran.id_franchise',
+                    'tb_detailpengeluaran.id_bahanbaku',
+                    DB::raw('SUM(tb_detailpengeluaran.jumlah) as total_jumlah')
+                )
+                ->groupBy(
+                    'tb_pengeluaran.id_franchise',
+                    'tb_detailpengeluaran.id_bahanbaku'
+                )
+                ->get();
+
+            foreach ($detailBahan as $item) {
+                $idBahan = $item->id_bahanbaku;
+                $jumlahKeluar = $item->total_jumlah;
+                $idFranchise = $item->id_franchise;
+
+                DB::table('tb_bahanbaku')
+                    ->where('id_bahanbaku', $idBahan)
+                    ->update([
+                        'stok' => DB::raw("stok - {$jumlahKeluar}")
+                    ]);
+
+                $laporan = DB::table('tb_laporanstok')
+                    ->where('id_bahanbaku', $idBahan)
+                    ->orderByDesc('id_laporan')
+                    ->first();
+
+                if ($laporan) {
+                    DB::table('tb_laporanstok')
+                        ->where('id_laporan', $laporan->id_laporan)
+                        ->update([
+                            'barang_keluar' => DB::raw("barang_keluar + {$jumlahKeluar}"),
+                            'stok_akhir' => DB::raw("stok_akhir - {$jumlahKeluar}")
+                        ]);
+                }
+
+                $stokFranchise = DB::table('tb_stokfranchise')
+                    ->where('id_franchise', $idFranchise)
+                    ->where('id_bahanbaku', $idBahan)
+                    ->first();
+
+                if ($stokFranchise) {
+                    DB::table('tb_stokfranchise')
+                        ->where('id_stokfranchise', $stokFranchise->id_stokfranchise)
+                        ->update([
+                            'stok' => DB::raw("stok + {$jumlahKeluar}"),
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    $lastStok = DB::table('tb_stokfranchise')
+                        ->orderBy('id_stokfranchise', 'desc')
+                        ->first();
+
+                    $lastNumber = $lastStok
+                        ? (int) substr($lastStok->id_stokfranchise, 2)
+                        : 0;
+
+                    $idStokFranchise = 'SF' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+
+                    DB::table('tb_stokfranchise')->insert([
+                        'id_stokfranchise' => $idStokFranchise,
+                        'id_franchise' => $idFranchise,
+                        'id_bahanbaku' => $idBahan,
+                        'stok' => $jumlahKeluar,
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            DB::table('tb_transaksi')
+                ->where('id_transaksi', $id)
+                ->update([
+                    'status_transaksi' => 'Selesai'
+                ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Pesanan selesai dan stok berhasil diperbarui.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error menyelesaikan pesanan', [
+                'message' => $e->getMessage(),
+                'id_transaksi' => $id,
+            ]);
+
+            return redirect()->back()->with('error', 'Gagal menyelesaikan pesanan.');
+        }
     }
 
     public function simpanBarangMasuk(Request $request)
@@ -400,10 +613,6 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
         return view('gudang.stok', compact('bahan', 'editData'));
     }
 
-
-
-
-
 public function riwayatgudang(Request $request)
 {
     $from = $request->input('from');
@@ -460,16 +669,16 @@ $riwayatmasuk = DB::table('tb_transaksi')
     // Riwayat Pengeluaran
 $riwayatkeluar = DB::table('tb_transaksi')
     ->join('tb_pengeluaran', 'tb_pengeluaran.id_transaksi', '=', 'tb_transaksi.id_transaksi')
-    ->leftJoin('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+    ->leftJoin('tb_paket', 'tb_pengeluaran.id_paket', '=', 'tb_paket.id_paket')
     ->leftJoin('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
     ->select(
         'tb_transaksi.id_transaksi',
         'tb_transaksi.tanggal_transaksi',
         'tb_transaksi.struk',
-        DB::raw('GROUP_CONCAT(tb_bahanbaku.nama_bahan SEPARATOR ", ") as nama_bahan'),
+        DB::raw('GROUP_CONCAT(tb_paket.nama_paket SEPARATOR ", ") as nama_bahan'),
         DB::raw('GROUP_CONCAT(tb_pengeluaran.jumlah SEPARATOR ", ") as jumlah'),
         DB::raw('GROUP_CONCAT(tb_pengeluaran.harga SEPARATOR ", ") as harga'),
-        DB::raw('GROUP_CONCAT(tb_bahanbaku.satuan SEPARATOR ", ") as satuan'),
+        DB::raw('GROUP_CONCAT(tb_paket.harga SEPARATOR ", ") as satuan'),
         DB::raw('GROUP_CONCAT(tb_franchise.nama_franchise SEPARATOR ", ") as nama_franchise'),
         DB::raw('GROUP_CONCAT(tb_franchise.alamat_usaha SEPARATOR ", ") as alamat_usaha'),
         'tb_transaksi.total',
@@ -479,7 +688,7 @@ $riwayatkeluar = DB::table('tb_transaksi')
     ->where('tb_transaksi.jenis_transaksi', '=', 'Pengeluaran')
     ->when($keywordKeluar, function ($query, $keywordKeluar) {
         $query->where(function ($q) use ($keywordKeluar) {
-            $q->where('tb_bahanbaku.nama_bahan', 'like', "%$keywordKeluar%")
+            $q->where('tb_paket.nama_paket', 'like', "%$keywordKeluar%")
               ->orWhere('tb_franchise.nama_franchise', 'like', "%$keywordKeluar%");
         });
     })
@@ -526,7 +735,7 @@ public function Editmasuk($id)
         ->select(
             'tb_bahanbaku.id_bahanbaku',
             'tb_bahanbaku.nama_bahan',
-            'tb_bahanbaku.harga_jual',
+            'tb_bahanbaku.harga_modal',
             'tb_pemasukan.id_pemasukan',
             'tb_pemasukan.jumlah',
             'tb_pemasukan.harga',
@@ -575,6 +784,12 @@ public function hapusmasuk($id)
                 'barang_masuk' => DB::raw("barang_masuk - $id_transaksi->jumlah"),
                 'stok_akhir' => DB::raw("stok_akhir - $id_transaksi->jumlah"),
         ]);
+
+        DB::table('tb_bahanbaku')
+            ->where('id_bahanbaku', $id_transaksi->id_bahanbaku)
+            ->update([
+                'stok' => DB::raw("stok - $id_transaksi->jumlah"),
+            ]);
 
         DB::table('tb_pemasukan')->where('id_pemasukan', $id)->delete();
 
@@ -649,6 +864,13 @@ public function updatemasuk(Request $request)
                             'barang_masuk' => DB::raw("barang_masuk + $jumlahupdate"),
                             'stok_akhir' => DB::raw("stok_akhir + $jumlahupdate"),
                         ]);
+                    
+                    DB::table('tb_bahanbaku')
+                        ->where('id_bahanbaku', $jumlahasal->id_bahanbaku)
+                        ->update([
+                            'stok' => DB::raw("stok + $jumlahupdate"),
+                        ]);
+
                 } elseif ($jumlahasal->jumlah > $jumlahinput){
                     $jumlahupdate = $jumlahasal->jumlah - $jumlahinput;
 
@@ -659,6 +881,12 @@ public function updatemasuk(Request $request)
                         ->update([
                             'barang_masuk' => DB::raw("barang_masuk - $jumlahupdate"),
                             'stok_akhir' => DB::raw("stok_akhir - $jumlahupdate"),
+                        ]);
+
+                    DB::table('tb_bahanbaku')
+                        ->where('id_bahanbaku', $jumlahasal->id_bahanbaku)
+                        ->update([
+                            'stok' => DB::raw("stok - $jumlahupdate"),
                         ]);
                 }
 
@@ -772,6 +1000,12 @@ public function tambahBahanMasuk(Request $request)
                 'stok_akhir' => DB::raw("stok_akhir + $request->jumlah"),
             ]);
 
+        DB::table('tb_bahanbaku')
+            ->where('id_bahanbaku', $request->id_bahanbaku)
+            ->update([
+                'stok' => DB::raw("stok + $request->jumlah"),
+            ]);
+
             $data = DB::table('tb_pemasukan')
             ->join('tb_bahanbaku', 'tb_pemasukan.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->join('tb_supplier', 'tb_bahanbaku.id_supplier', '=', 'tb_supplier.id_supplier')
@@ -875,6 +1109,12 @@ public function hapuskeluar($id)
                 'stok_akhir' => DB::raw("stok_akhir + $id_transaksi->jumlah"),
         ]);
 
+        DB::table('tb_bahanbaku')
+            ->where('id_bahanbaku', $id_transaksi->id_bahanbaku)
+            ->update([
+                'stok' => DB::raw("stok + $id_transaksi->jumlah"),
+            ]);
+
         DB::table('tb_pengeluaran')->where('id_pengeluaran', $id)->delete();
 
         $data = DB::table('tb_pengeluaran')
@@ -949,6 +1189,13 @@ public function updatekeluar(Request $request)
                             'barang_keluar' => DB::raw("barang_keluar + $jumlahupdate"),
                             'stok_akhir' => DB::raw("stok_akhir - $jumlahupdate"),
                         ]);
+
+                    DB::table('tb_bahanbaku')
+                        ->where('id_bahanbaku', $jumlahasal->id_bahanbaku)
+                        ->update([
+                            'stok' => DB::raw("stok - $jumlahupdate"),
+                        ]);
+
                 } elseif ($jumlahasal->jumlah > $jumlahinput){
                     $jumlahupdate = $jumlahasal->jumlah - $jumlahinput;
 
@@ -959,6 +1206,12 @@ public function updatekeluar(Request $request)
                         ->update([
                             'barang_keluar' => DB::raw("barang_keluar - $jumlahupdate"),
                             'stok_akhir' => DB::raw("stok_akhir + $jumlahupdate"),
+                        ]);
+
+                    DB::table('tb_bahanbaku')
+                        ->where('id_bahanbaku', $jumlahasal->id_bahanbaku)
+                        ->update([
+                            'stok' => DB::raw("stok + $jumlahupdate"),
                         ]);
                 }
 
@@ -1078,6 +1331,12 @@ public function tambahBahanKeluar(Request $request)
                 'stok_akhir' => DB::raw("stok_akhir - $request->jumlah"),
             ]);
 
+        DB::table('tb_bahanbaku')
+            ->where('id_bahanbaku', $request->id_bahanbaku)
+            ->update([
+                'stok' => DB::raw("stok - $request->jumlah")
+            ]);
+
         $data = DB::table('tb_pengeluaran')
             ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->join('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
@@ -1136,6 +1395,12 @@ public function hapusTransaksi($id)
                     'barang_keluar' => DB::raw("barang_keluar - {$bahan->jumlah}"),
                     'stok_akhir' => DB::raw("stok_akhir + {$bahan->jumlah}"),
                 ]);
+
+            DB::table('tb_bahanbaku')
+                ->where('id_bahanbaku', $bahan->id_bahanbaku)
+                ->update([
+                    'stok' => DB::raw("stok + {$bahan->jumlah}"),
+                ]);
         }
 
         // Jika ingin, juga hapus semua bahan terkait dari tb_pengeluaran
@@ -1166,6 +1431,12 @@ public function hapusTransaksimasuk($id)
                 ->update([
                     'barang_masuk' => DB::raw("barang_masuk - {$bahan->jumlah}"),
                     'stok_akhir' => DB::raw("stok_akhir - {$bahan->jumlah}"),
+                ]);
+
+            DB::table('tb_bahanbaku')
+                ->where('id_bahanbaku', $bahan->id_bahanbaku)
+                ->update([
+                    'stok' => DB::raw("stok - {$bahan->jumlah}"),
                 ]);
         }
 
@@ -1241,32 +1512,24 @@ public function hapusTransaksimasuk($id)
                 'id_supplier' => $idSupplier,
                 'nama_supplier' => $request->nama_supplier,
                 'no_telp' => $request->no_telp,
-                'alamat' => $request->alamat,
-                'created_at' => now(),
-                'updated_at' => now()
+                'alamat' => $request->alamat
             ]);
         } elseif (!empty($request->no_telp) && empty($request->alamat)) {
             DB::table('tb_supplier')->insert([
                 'id_supplier' => $idSupplier,
                 'nama_supplier' => $request->nama_supplier,
-                'no_telp' => $request->no_telp,
-                'created_at' => now(),
-                'updated_at' => now()
+                'no_telp' => $request->no_telp
             ]);
         } elseif (empty($request->no_telp) && !empty($request->alamat)) {
             DB::table('tb_supplier')->insert([
                 'id_supplier' => $idSupplier,
                 'nama_supplier' => $request->nama_supplier,
                 'alamat' => $request->alamat,
-                'created_at' => now(),
-                'updated_at' => now()
             ]);
         } else {
             DB::table('tb_supplier')->insert([
                 'id_supplier' => $idSupplier,
                 'nama_supplier' => $request->nama_supplier,
-                'created_at' => now(),
-                'updated_at' => now()
             ]);
         }
 
@@ -1337,41 +1600,60 @@ public function hapusTransaksimasuk($id)
 
     public function printNota($id)
     {
-        // Ambil semua baris pengeluaran berdasarkan id_pengeluaran, join bahan baku
         $data = DB::table('tb_pengeluaran')
-            ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->join('tb_transaksi', 'tb_pengeluaran.id_transaksi', '=', 'tb_transaksi.id_transaksi')
             ->join('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
+            ->join('tb_paket', 'tb_pengeluaran.id_paket', '=', 'tb_paket.id_paket')
+            ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+            ->join('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->where('tb_pengeluaran.id_transaksi', $id)
             ->select(
-                'tb_pengeluaran.*',
+                'tb_transaksi.id_transaksi',
+                'tb_transaksi.tanggal_transaksi',
+                'tb_transaksi.total',
+
+                'tb_pengeluaran.id_pengeluaran',
+                'tb_pengeluaran.jumlah as jumlah_paket',
+                'tb_pengeluaran.harga as subtotal_paket',
+
+                'tb_franchise.nama_franchise',
+                'tb_franchise.alamat_usaha',
+
+                'tb_paket.nama_paket',
+
                 'tb_bahanbaku.nama_bahan',
                 'tb_bahanbaku.satuan',
-                'tb_franchise.nama_franchise',
-                'tb_franchise.alamat_usaha'
+                'tb_detailpengeluaran.jumlah as jumlah_bahan'
             )
             ->get();
 
-        $total = DB::table('tb_transaksi')
-                ->where('id_transaksi', '=', $id)
-                ->first();
-                
+        if ($data->isEmpty()) {
+            return redirect()->back()->with('error', 'Data nota tidak ditemukan.');
+        }
 
-        $header = $data->first(); // untuk keperluan header nota
-        
-        // 🔹 Generate PDF dari view yang sama
+        $total = DB::table('tb_transaksi')
+            ->where('id_transaksi', $id)
+            ->first();
+
+        $header = $data->first();
+
         $pdf = Pdf::loadView('gudang.nota_keluar', compact('data', 'header', 'total'))
-            ->setPaper([0, 0, 226.77, 600], 'portrait'); // ukuran thermal 80mm
-    
-        // 🔹 Simpan file PDF ke folder public/uploads/nota
+            ->setPaper([0, 0, 226.77, 600], 'portrait');
+
         $filename = 'nota_' . $id . '.pdf';
         $path = public_path('uploads/strukdc/' . $filename);
+
+        if (!file_exists(public_path('uploads/strukdc'))) {
+            mkdir(public_path('uploads/strukdc'), 0777, true);
+        }
+
         $pdf->save($path);
-        
+
         DB::table('tb_transaksi')
-        ->where('id_transaksi', $id)
-        ->update([
-            'struk' => $filename, // isi dengan nilai baru
-        ]);
+            ->where('id_transaksi', $id)
+            ->update([
+                'struk' => $filename,
+            ]);
 
         return view('gudang.nota_keluar', compact('data', 'header', 'total'));
     }
@@ -1711,7 +1993,8 @@ public function exportPenjualanPDF(Request $request)
     $bulan = $request->get('bulan');
 
     $data = DB::table('tb_pengeluaran')
-        ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+        ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+        ->join('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
         ->select(
             'tb_pengeluaran.id_transaksi',
             'tb_bahanbaku.nama_bahan',
@@ -1723,7 +2006,7 @@ public function exportPenjualanPDF(Request $request)
         )
         ->whereYear('tb_pengeluaran.created_at', $tahun)
         ->when($bulan, fn($q) => $q->whereMonth('tb_pengeluaran.created_at', $bulan))
-        ->orderBy('tb_pengeluaran.created_at', 'desc') // 🔹 Urut dari terbaru ke terlama
+        ->orderBy('tb_pengeluaran.created_at', 'desc')
         ->get();
 
     $pdf = Pdf::loadView('exports.penjualan_pdf', compact('data', 'bulan', 'tahun'))
@@ -1739,12 +2022,12 @@ public function exportPenjualanExcel(Request $request)
     $bulan = $request->get('bulan');
 
     $data = DB::table('tb_pengeluaran')
-        ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+        ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+        ->join('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
         ->select(
             'tb_pengeluaran.id_transaksi',
             'tb_bahanbaku.nama_bahan',
             'tb_pengeluaran.jumlah',
-            // ✅ ambil harga_modal & harga_jual
             'tb_bahanbaku.harga_modal',
             'tb_bahanbaku.harga_jual',
             DB::raw('(tb_bahanbaku.harga_jual - tb_bahanbaku.harga_modal) * tb_pengeluaran.jumlah as laba'),
@@ -1817,17 +2100,17 @@ public function tabelPenjualan(Request $request)
 {
     $bulan = $request->input('bulan');
     $tahun = $request->input('tahun', date('Y'));
-    $direction = $request->input('direction', 'desc'); // default: terbaru dulu
+    $direction = $request->input('direction', 'desc');
 
     $query = DB::table('tb_pengeluaran')
-        ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+        ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+        ->join('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
         ->whereYear('tb_pengeluaran.created_at', $tahun);
 
     if (!empty($bulan)) {
         $query->whereMonth('tb_pengeluaran.created_at', $bulan);
     }
 
-    // ✅ urutkan berdasarkan created_at sesuai tombol
     $transaksiDetail = $query->select(
         'tb_pengeluaran.id_transaksi',
         'tb_bahanbaku.nama_bahan',
@@ -1844,9 +2127,266 @@ public function tabelPenjualan(Request $request)
         'transaksiDetail' => $transaksiDetail,
         'bulanSekarang' => (int)($bulan ?: date('m')),
         'tahunSekarang' => (int)$tahun,
-        'direction' => $direction, // kirim ke view
+        'direction' => $direction,
     ]);
 }
+
+public function tabelPaket(Request $request)
+{
+    $paket = DB::table('tb_paket')
+        ->join('tb_detailpaket', 'tb_paket.id_paket', '=', 'tb_detailpaket.id_paket')
+        ->join('tb_bahanbaku', 'tb_detailpaket.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+        ->select(
+            'tb_paket.id_paket',
+            'tb_paket.nama_paket',
+            'tb_paket.harga',
+            'tb_paket.gambar_paket',
+            DB::raw("GROUP_CONCAT(tb_bahanbaku.nama_bahan SEPARATOR ', ') as bahan"),
+            DB::raw("GROUP_CONCAT(tb_bahanbaku.id_bahanbaku SEPARATOR ', ') as id_bahanbaku"),
+            DB::raw("GROUP_CONCAT(tb_bahanbaku.satuan SEPARATOR ', ') as satuan"),
+            DB::raw("GROUP_CONCAT(tb_detailpaket.jumlah SEPARATOR ', ') as jumlah")
+        )
+        ->groupBy('tb_paket.id_paket', 'tb_paket.nama_paket', 'tb_paket.harga', 'tb_paket.gambar_paket')
+        ->get();
+
+
+    $bahanbaku = DB::table('tb_bahanbaku')
+        ->select()
+        ->get();
+
+    return view('gudang.tabelpaket', [
+        'paket' => $paket,
+        'bahanbaku' => $bahanbaku,
+    ]);
+}
+
+    public function tambahPaket(Request $request)
+    {
+        $request->validate([
+            'nama_paket' => 'required|string|max:255',
+            'id_bahanbaku' => 'required|array|min:1',
+            'id_bahanbaku.*' => 'required|string|exists:tb_bahanbaku,id_bahanbaku',
+            'jumlah' => 'required|array|min:1',
+            'jumlah.*' => 'required|numeric|min:1',
+            'harga' => 'required',
+            'gambar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'nama_paket.required' => 'Nama paket wajib diisi.',
+            'id_bahanbaku.*.required' => 'Bahan baku wajib dipilih.',
+            'id_bahanbaku.*.exists' => 'Bahan baku tidak valid.',
+            'jumlah.*.required' => 'Jumlah wajib diisi.',
+            'jumlah.*.numeric' => 'Jumlah harus berupa angka.',
+            'jumlah.*.min' => 'Jumlah minimal 1.',
+            'harga.min' => 'Harga minimal Rp. 1000.',
+            'gambar.required' => 'Masukkan gambar untuk paket',
+        ]);
+
+
+        DB::beginTransaction();
+
+        try {
+            $harga = str_replace(['Rp', '.', ' '], '', $request->harga);
+
+            $lastPaket = DB::table('tb_paket')
+                ->orderBy('id_paket', 'desc')
+                ->first();
+
+            if ($lastPaket) {
+                $lastNumber = (int) substr($lastPaket->id_paket, 1);
+                $newNumber = $lastNumber + 1;
+            } else {
+                $newNumber = 1;
+            }
+
+            $namaGambar = null;
+
+            if ($request->hasFile('gambar')) {
+                $file = $request->file('gambar');
+                $namaGambar = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/paket'), $namaGambar);
+            }
+
+            $idPaket = 'P' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+
+            DB::table('tb_paket')->insert([
+                'id_paket'    => $idPaket,
+                'nama_paket'  => $request->nama_paket,
+                'harga'       => $harga,
+                'gambar_paket' => $namaGambar,
+            ]);
+
+            foreach ($request->id_bahanbaku as $i => $idBahan) {
+                if (!empty($idBahan) && !empty($request->jumlah[$i])) {
+                    $lastDetailpaket = DB::table('tb_detailpaket')
+                        ->orderBy('id_detailpaket', 'desc')
+                        ->first();
+
+                    if ($lastDetailpaket) {
+                        $lastNumber = (int) substr($lastDetailpaket->id_detailpaket, 2);
+                        $newNumber = $lastNumber + 1;
+                    } else {
+                        $newNumber = 1;
+                    }
+
+                    $idDetailpaket = 'DP' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+                    DB::table('tb_detailpaket')->insert([
+                        'id_detailpaket' => $idDetailpaket,
+                        'id_paket'      => $idPaket,
+                        'id_bahanbaku'  => $idBahan,
+                        'jumlah'        => $request->jumlah[$i],
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Paket berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error tambah paket', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'request' => $request->all()
+            ]);
+
+            return redirect()->back()->with('error', 'Paket gagal ditambahkan. Error: ' . $e->getMessage());
+        }
+    }
+
+    public function updatePaket(Request $request)
+    {
+        $request->validate([
+            'id_paket' => 'required|exists:tb_paket,id_paket',
+            'nama_paket' => 'required|string|max:255',
+            'id_bahanbaku' => 'required|array|min:1',
+            'id_bahanbaku.*' => 'required|string|exists:tb_bahanbaku,id_bahanbaku',
+            'jumlah' => 'required|array|min:1',
+            'jumlah.*' => 'required|numeric|min:1',
+            'harga' => 'required',
+            'gambar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $harga = preg_replace('/[^0-9]/', '', $request->harga);
+
+            $paketLama = DB::table('tb_paket')
+                ->where('id_paket', $request->id_paket)
+                ->first();
+
+            $namaGambar = $paketLama->gambar_paket;
+
+            if ($request->hasFile('gambar')) {
+                if ($paketLama->gambar_paket && file_exists(public_path('uploads/paket/' . $paketLama->gambar_paket))) {
+                    unlink(public_path('uploads/paket/' . $paketLama->gambar_paket));
+                }
+
+                $file = $request->file('gambar');
+                $namaGambar = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/paket'), $namaGambar);
+            }
+
+            DB::table('tb_paket')
+                ->where('id_paket', $request->id_paket)
+                ->update([
+                    'nama_paket' => $request->nama_paket,
+                    'gambar_paket' =>$namaGambar,
+                    'harga' => $harga,
+                ]);
+
+            DB::table('tb_detailpaket')
+                ->where('id_paket', $request->id_paket)
+                ->delete();
+
+            $lastDetail = DB::table('tb_detailpaket')
+                ->orderBy('id_detailpaket', 'desc')
+                ->first();
+
+            $newNumberDetail = $lastDetail
+                ? (int) substr($lastDetail->id_detailpaket, 2)
+                : 0;
+
+            foreach ($request->id_bahanbaku as $i => $idBahan) {
+                $newNumberDetail++;
+
+                $idDetail = 'DP' . str_pad($newNumberDetail, 3, '0', STR_PAD_LEFT);
+
+                DB::table('tb_detailpaket')->insert([
+                    'id_detailpaket' => $idDetail,
+                    'id_paket' => $request->id_paket,
+                    'id_bahanbaku' => $idBahan,
+                    'jumlah' => $request->jumlah[$i],
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Paket berhasil diupdate.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error update paket', [
+                'message' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+
+            return redirect()->back()->with('error', 'Paket gagal diupdate.');
+        }
+    }
+
+    public function deletePaket($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $paket = DB::table('tb_paket')
+                ->where('id_paket', $id)
+                ->first();
+
+            if (!$paket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data paket tidak ditemukan.'
+                ], 404);
+            }
+
+            Log::info('Cek gambar paket', [
+                'id_paket' => $id,
+                'gambar_paket' => $paket->gambar_paket ?? null,
+                'path' => public_path('uploads/paket/' . ($paket->gambar_paket ?? '')),
+                'exists' => file_exists(public_path('uploads/paket/' . ($paket->gambar_paket ?? ''))),
+            ]);
+
+            if ($paket->gambar_paket && file_exists(public_path('uploads/paket/' . $paket->gambar_paket))) {
+                unlink(public_path('uploads/paket/' . $paket->gambar_paket));
+            }
+
+            DB::table('tb_detailpaket')
+                ->where('id_paket', $id)
+                ->delete();
+
+            DB::table('tb_paket')
+                ->where('id_paket', $id)
+                ->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     public function tabelPengeluaran(Request $request)
     {
@@ -2003,7 +2543,8 @@ public function tabelPenjualan(Request $request)
 
         $riwayatkeluar = DB::table('tb_transaksi')
         ->join('tb_pengeluaran', 'tb_pengeluaran.id_transaksi', '=', 'tb_transaksi.id_transaksi')
-        ->leftJoin('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+        ->leftJoin('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+        ->leftJoin('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
         ->leftJoin('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
         ->select(
             'tb_transaksi.id_transaksi',

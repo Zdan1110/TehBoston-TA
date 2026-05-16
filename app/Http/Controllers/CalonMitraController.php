@@ -33,9 +33,7 @@ class CalonMitraController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi Input
         $request->validate([
-            // Data Calon Mitra
             'nama_lengkap'   => 'required|string',
             'no_ktp'         => 'required|string|unique:tb_calonmitra,no_ktp',
             'provinsi'       => 'required|string',
@@ -44,8 +42,6 @@ class CalonMitraController extends Controller
             'ktp'            => 'required|file|mimes:jpg,jpeg,png,pdf',
             'no_hp'          => 'required|string',
             'alamat_lengkap' => 'required|string',
-        
-            // Data Lokasi Usaha
             'provinsi_usaha' => 'required|string',
             'kota_usaha'     => 'required|string',
             'kelurahan_usaha'=> 'required|string',
@@ -67,10 +63,10 @@ class CalonMitraController extends Controller
             ->first();
 
             if ($lastCalon) {
-            $lastNumcalon = (int) substr($lastCalon->id_calon, 1); // ambil angka setelah 'C'
+            $lastNumcalon = (int) substr($lastCalon->id_calon, 1);
             $idCalon = 'C' . str_pad($lastNumcalon + 1, 4, '0', STR_PAD_LEFT);
             } else {
-            $idCalon = 'C0001'; // Kalau belum ada data
+            $idCalon = 'C0001';
             }
 
             $filektp = Request()->file('ktp');
@@ -83,7 +79,6 @@ class CalonMitraController extends Controller
 
             // Simpan Data ke Database
             $datacalon = [
-                // Data Calon Mitra
                 'id_calon' => $idCalon,
                 'id_akun' => $id_akun,
                 'nama_lengkap' => $request->nama_lengkap,
@@ -94,8 +89,6 @@ class CalonMitraController extends Controller
                 'ktp' => $fileNamektp,
                 'no_hp' => $request->no_hp,
                 'alamat_lengkap' => $request->alamat_lengkap,
-
-                // Data Lokasi Usaha
                 'provinsi_usaha' => $request->provinsi_usaha,
                 'kota_usaha' => $request->kota_usaha,
                 'kelurahan_usaha' => $request->kelurahan_usaha,
@@ -110,13 +103,9 @@ class CalonMitraController extends Controller
             try {
                 DB::table('tb_calonmitra')->insert($datacalon);
                 Log::info('Data calon mitra berhasil disimpan.', $datacalon);
-    
-                // Redirect ke /home jika sukses
                 return redirect('/qrcode')->with('success', 'Pendaftaran berhasil!.');
             } catch (\Exception $e) {
                 Log::error('Gagal menyimpan data calon mitra: ' . $e->getMessage());
-    
-                // Redirect balik ke /daftarmitra dengan pesan error
                 return redirect('/home')->with('error', 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.');
             }
             

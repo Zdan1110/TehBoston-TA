@@ -71,11 +71,11 @@
             <table>
                 <tr>
                     <td><strong>ID:</strong></td>
-                    <td>{{ $data[0]->id_pengeluaran }}</td>
+                    <td>{{ $header->id_transaksi }}</td>
                 </tr>
                 <tr>
                     <td><strong>Tanggal:</strong></td>
-                    <td>{{ \Carbon\Carbon::parse($data[0]->created_at)->format('d M Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($header->tanggal_transaksi)->format('d M Y H:i') }}</td>
                 </tr>
                 <tr>
                     <td><strong>Franchise:</strong></td>
@@ -92,19 +92,42 @@
             <table>
                 <thead>
                     <tr>
-                        <td><strong>Nama</strong></td>
+                        <td><strong>Nama Paket</strong></td>
+                        <td><strong>Qty</strong></td>
+                        <td><strong>Harga</strong></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $paketList = $data->unique('id_pengeluaran');
+                    @endphp
+
+                    @foreach ($paketList as $item)
+                    <tr>
+                        <td>{{ $item->nama_paket }}</td>
+                        <td>{{ $item->jumlah_paket }}</td>
+                        <td>Rp. {{ number_format($item->subtotal_paket, 0, ',', '.') }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <hr style="border-top: 1px dashed #000; margin: 8px 0;">
+
+            <table>
+                <thead>
+                    <tr>
+                        <td><strong>Nama Bahan Baku</strong></td>
                         <td><strong>Qty</strong></td>
                         <td><strong>Satuan</strong></td>
-                        <td><strong>Harga</strong></td>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($data as $item)
                     <tr>
                         <td>{{ $item->nama_bahan }}</td>
-                        <td>{{ $item->jumlah }}</td>
+                        <td>{{ $item->jumlah_bahan }}</td>
                         <td>{{ $item->satuan }}</td>
-                        <td>Rp. {{ number_format($item->harga, 0, ',', '.') }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -125,7 +148,7 @@
         });
 
         window.onafterprint = function () {
-            window.location.href = "{{ url('gudang/keluar') }}";
+            window.location.href = "{{ url('gudang/riwayat#keluar') }}";
         };
     </script>
 </body>

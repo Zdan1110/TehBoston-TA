@@ -116,9 +116,9 @@
                     </div>
 
                     <div class="d-flex justify-content-between mt-4">
-                        <button type="submit" class="btn btn-primary" style="background-color: #ffd600; color:black">
+                        <!-- <button type="submit" class="btn btn-primary" style="background-color: #ffd600; color:black">
                             <i class="bi bi-clock me-2"></i>Pending
-                        </button>
+                        </button> -->
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-save me-2"></i>Simpan Barang Masuk
                         </button>

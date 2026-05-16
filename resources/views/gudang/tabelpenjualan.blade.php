@@ -4,7 +4,6 @@
 @section('content')
 <div class="container-fluid p-4">
 
-    <!-- 🔄 FILTER -->
     <form id="filterForm" method="GET" action="{{ route('gudang.tabelpenjualan') }}" class="row g-3 mb-4">
         <div class="col-md-4">
             <label for="bulan" class="form-label">Bulan</label>
@@ -27,7 +26,6 @@
             </select>
         </div>
 
-        <!-- 🔽 Tombol Sort -->
         <div class="col-md-2 d-flex align-items-end">
             <button type="submit" name="direction" value="{{ $direction === 'desc' ? 'asc' : 'desc' }}" class="btn btn-outline-secondary w-100">
                 @if ($direction === 'desc')
@@ -38,7 +36,6 @@
             </button>
         </div>
 
-        <!-- 📄 Export -->
         <div class="col-md-3 d-flex align-items-end">
             <a href="{{ route('gudang.penjualan.export.pdf', ['bulan' => $bulanSekarang, 'tahun' => $tahunSekarang]) }}" 
                class="btn btn-danger w-50 me-2"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
@@ -47,7 +44,6 @@
         </div>
     </form>
 
-    <!-- 📊 TABEL PENJUALAN -->
     <div class="table-responsive">
         <table class="table table-bordered align-middle text-center">
             <thead class="table-success">

@@ -165,7 +165,7 @@
                 <div class="line bg-gray-700"></div>
                 <div class="line bg-gray-700"></div>
             </button>
-            <h1 class="text-xl font-bold text-gray-800">@yield('page-title', 'Dashboard Kasir')</h1>
+            <h1 class="text-xl font-bold text-gray-800">@yield('page-title', 'Kasir')</h1>
         </div>
         <div class="flex items-center space-x-4">
             <span id="liveClock" class="text-sm font-semibold text-green-700"></span>
@@ -202,6 +202,13 @@
                 <i class="fas fa-cash-register"></i>
                 <span>Stok Bahan</span>
             </a>
+
+            @if($user && $user['type_akun'] != 'kasir')
+                <a href="{{ route('riwayat.pesanan') }}" class="nav-item flex items-center space-x-2 px-4 py-3 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Riwayat Pesanan</span>
+                </a>
+            @endif
 
             <a href="/pelaporan" class="nav-item flex items-center space-x-2 px-4 py-3 rounded-lg hover:bg-green-700">
                 <i class="fas fa-file-alt"></i>

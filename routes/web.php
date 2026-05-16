@@ -94,10 +94,18 @@ Route::post('/uploadbuktifranchise/{id_franchisebaru}', [CalonMitraController::c
     Route::get('/kasir', [KasirController::class, 'kasir']);
         Route::get('/dashkasir', [KasirController::class, 'index'])->name('kasir.v_dashkasir');
         Route::get('/stokbahan', [KasirController::class, 'stokFranchise'])->name('stok.franchise');
-        Route::post('/tambahstok', [KasirController::class, 'tambahstok'])->name('insert.stok');
-        Route::get('/editstok/{id}', [KasirController::class, 'editstok'])->name('edit.stok');
-        Route::put('/updatestok/{id}', [KasirController::class, 'updateStok'])->name('stokbahan.update');
-        Route::delete('/deletestok/{id}', [KasirController::class, 'destroyStok'])->name('stokbahan.destroy');
+        Route::get('/orderstok', [KasirController::class, 'OrderStok'])->name('order.stok');
+        Route::post('/order/store', [KasirController::class, 'storeOrder'])->name('order.store');
+        Route::get('/pembayaran/{id}', [KasirController::class, 'pilihPembayaran'])->name('pembayaran.pilih');
+        Route::post('/pembayaran/tunai/{id}', [KasirController::class, 'bayarTunai'])->name('pembayaran.tunai');
+        Route::post('/pembayaran/midtrans/{id}', [KasirController::class, 'bayarMidtrans'])->name('pembayaran.midtrans');
+        Route::get('/pembayaran/success/{id}', [KasirController::class, 'successMidtrans'])->name('midtrans.success');
+        Route::get('/riwayat/pesanan', [KasirController::class, 'RiwayatPesanan'])->name('riwayat.pesanan');
+        Route::get('/pembayaran/lanjut/{id}', [PembayaranController::class, 'lanjutPembayaran'])->name('pembayaran.midtrans.lanjut');
+        // Route::post('/tambahstok', [KasirController::class, 'tambahstok'])->name('insert.stok');
+        // Route::get('/editstok/{id}', [KasirController::class, 'editstok'])->name('edit.stok');
+        // Route::put('/updatestok/{id}', [KasirController::class, 'updateStok'])->name('stokbahan.update');
+        // Route::delete('/deletestok/{id}', [KasirController::class, 'destroyStok'])->name('stokbahan.destroy');
         Route::post('/kasir/store', [KasirController::class, 'store'])->name('kasir.store');
         Route::post('/kasir/checkout', [KasirController::class, 'checkout']);
         Route::get('/pelaporan', [KasirController::class, 'laporan']);
@@ -247,7 +255,7 @@ Route::middleware(['auth', 'gudang.only'])->prefix('gudang')->group(function () 
     Route::get('/masuk', function() { return view('gudang.masuk'); });
     Route::post('/tambahmasuk', [GudangController::class, 'simpanBarangMasuk'])->name('barang.masuk');
     Route::post('/tambahkeluar', [GudangController::class, 'simpanBarangKeluar'])->name('barang.keluar');
-    Route::get('/keluar', function() { return view('gudang.keluar'); });
+    Route::get('/pesanan', [GudangController::class, 'Pesananbahanbaku'])->name('pesanan.bahanbaku');
     Route::get('/stok', [GudangController::class, 'laporanstok'])->name('laporan.stok');
     Route::get('/riwayat', [GudangController::class, 'riwayatgudang'])->name('riwayat.gudang');
     Route::get('/riwayat/editkeluar/{id}', [GudangController::class, 'Editkeluar']);
@@ -274,6 +282,13 @@ Route::middleware(['auth', 'gudang.only'])->prefix('gudang')->group(function () 
     Route::post('/stok/tambah', [GudangController::class, 'tambahLaporanStok'])->name('laporan.stok.tambah');
     Route::put('/stok/update/{id}', [GudangController::class, 'updateStok'])->name('laporan.stok.update');Route::get('/tabelpengeluaran', [GudangController::class, 'tabelPengeluaran'])->name('gudang.tabelpengeluaran');
     Route::get('/tabelpenjualan', [GudangController::class, 'tabelPenjualan'])->name('gudang.tabelpenjualan');
+    Route::get('/tabelpaket', [GudangController::class, 'tabelPaket'])->name('gudang.tabelpaket');
+    Route::post('/tabelpaket/tambah', [GudangController::class, 'tambahPaket'])->name('paket.store');
+    Route::put('/paket/update', [GudangController::class, 'updatePaket'])->name('paket.update');
+    Route::delete('/paket/delete/{id}', [GudangController::class, 'deletePaket'])->name('paket.delete');
+    Route::put('/pesanan/lunasi/{id}', [GudangController::class, 'lunasiPembayaran'])->name('pesanan.lunasi');
+    Route::put('/pesanan/kirim/{id}', [GudangController::class, 'kirimPesanan'])->name('pesanan.kirim');
+    Route::put('/pesanan/selesai/{id}', [GudangController::class, 'selesaiPesanan'])->name('pesanan.selesai');
 
        // Penjualan
         Route::get('/penjualan/export/pdf', [GudangController::class, 'exportPenjualanPDF'])->name('gudang.penjualan.export.pdf');

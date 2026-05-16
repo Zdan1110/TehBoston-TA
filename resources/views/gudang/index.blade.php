@@ -98,7 +98,7 @@
 
 <div class="row">
     <!-- Quick Chart - Perbaikan di sini -->
-    <form method="GET" class="mb-4">
+    <form method="GET" class="">
         <div class="d-flex align-items-center gap-2">
             <label for="bulan" class="form-label m-0">Filter Bulan:</label>
             <select name="bulan" id="bulan" class="form-control" style="width: 120px;">
@@ -122,7 +122,7 @@
     </form>
 
 
-    <div class="card mb-4" style="max-width: 700px; margin: auto;">
+    <div class="card" style="max-width: 700px; margin: auto;">
         <div div class="w-100">
             {!! $chart->container() !!}
         </div>

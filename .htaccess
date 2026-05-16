@@ -17,7 +17,7 @@ RewriteRule ^(.*)$ public/$1 [L]
 # To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
 # For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
 <IfModule php8_module>
-   php_flag display_errors Off
+   php_flag display_errors On
    php_value max_execution_time 600
    php_value max_input_time 600
    php_value max_input_vars 5000
@@ -29,7 +29,7 @@ RewriteRule ^(.*)$ public/$1 [L]
    php_flag zlib.output_compression Off
 </IfModule>
 <IfModule lsapi_module>
-   php_flag display_errors Off
+   php_flag display_errors On
    php_value max_execution_time 600
    php_value max_input_time 600
    php_value max_input_vars 5000
@@ -41,10 +41,3 @@ RewriteRule ^(.*)$ public/$1 [L]
    php_flag zlib.output_compression Off
 </IfModule>
 # END cPanel-generated php ini directives, do not edit
-
-# php -- BEGIN cPanel-generated handler, do not edit
-# Set the “ea-php82” package as the default “PHP” programming language.
-<IfModule mime_module>
-  AddHandler application/x-httpd-ea-php82___lsphp .php .php8 .phtml
-</IfModule>
-# php -- END cPanel-generated handler, do not edit

@@ -18,17 +18,16 @@ class M_kasir extends Model
     public function DataHarian($id_franchise)
     {
         return DB::table('tb_penjualan')
-            ->leftJoin('tb_detailpenjualan', 'tb_detailpenjualan.id_penjualan', '=', 'tb_penjualan.id_penjualan')
-            ->select(
-                'tb_penjualan.pelanggan',
-                'tb_penjualan.tanggal',
-                DB::raw("GROUP_CONCAT(tb_detailpenjualan.nama_produk SEPARATOR ', ') as nama_produk"),
-                DB::raw("GROUP_CONCAT(tb_detailpenjualan.harga SEPARATOR ', ') as harga"),
-                DB::raw("GROUP_CONCAT(tb_detailpenjualan.jumlah SEPARATOR ', ') as jumlah")
-            )
+            ->join('tb_detailpenjualan', 'tb_penjualan.id_penjualan', '=', 'tb_detailpenjualan.id_penjualan')
             ->where('tb_penjualan.id_franchise', $id_franchise)
-            ->whereDate('tb_penjualan.tanggal', Carbon::today())
-            ->groupBy('tb_penjualan.pelanggan', 'tb_penjualan.tanggal')
+            ->select(
+                'tb_penjualan.id_penjualan',
+                'tb_penjualan.tanggal',
+                'tb_detailpenjualan.nama_produk',
+                'tb_detailpenjualan.jumlah',
+                'tb_detailpenjualan.harga'
+            )
+            ->orderByDesc('tb_penjualan.tanggal')
             ->get();
     }
 
@@ -88,7 +87,6 @@ class M_kasir extends Model
         ->leftJoin('tb_detailpenjualan', 'tb_detailpenjualan.id_penjualan', '=', 'tb_penjualan.id_penjualan')
         ->select(
             'tb_penjualan.id_penjualan',
-            'tb_penjualan.pelanggan',
             'tb_penjualan.tanggal',
             'tb_penjualan.harga',
             DB::raw("GROUP_CONCAT(CONCAT(tb_detailpenjualan.nama_produk, ' (', tb_detailpenjualan.jumlah, ')') SEPARATOR ', ') as nama_produk")
@@ -96,7 +94,7 @@ class M_kasir extends Model
         ->where('tb_penjualan.id_franchise', $id_franchise)
         ->whereMonth('tb_penjualan.tanggal', $bulan)
         ->whereYear('tb_penjualan.tanggal', $tahun)
-        ->groupBy('tb_penjualan.id_penjualan', 'tb_penjualan.pelanggan', 'tb_penjualan.tanggal', 'tb_penjualan.harga')
+        ->groupBy('tb_penjualan.id_penjualan', 'tb_penjualan.tanggal', 'tb_penjualan.harga')
         ->get();
 }
 

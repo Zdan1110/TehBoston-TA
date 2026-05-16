@@ -143,6 +143,16 @@
         align-items: center;
       }
     }
+
+    .btn-lunas {
+        background-color: #13f164;
+        color: white;
+        border: 2px solid #464444;
+    }
+
+    .btn-lunas:hover {
+        background-color: #16a34a;
+    }s
     /* Hapus warna biru default di sidebar link */
     .sidebar .nav-link {
       color: rgba(255,255,255,0.85) !important;
@@ -154,6 +164,16 @@
     .sidebar .nav-link.active {
       background-color: var(--secondary) !important;
       color: var(--primary) !important;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 38px;
+        padding: 5px 8px;
+        border: 1px solid #ced4da;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
     }
 
   </style>
@@ -174,27 +194,9 @@
   <ul class="nav flex-column mt-3">
 
     <li class="nav-item">
-      <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#dashboardMenu" role="button" aria-expanded="{{ Request::is('gudang') || Request::is('gudang/omset') ? 'true' : 'false' }}" aria-controls="dashboardMenu">
-        <div>
-          <i class="bi bi-speedometer2"></i> <span>Dashboard DC</span>
-        </div>
-        <i class="bi bi-caret-down-fill"></i>
-      </a>
-      <div class="collapse {{ Request::is('gudang') || Request::is('gudang/omset') ? 'show' : '' }}" id="dashboardMenu">
-        <ul class="nav flex-column ms-4">
-          <li class="nav-item">
-            <a href="{{ route('gudang.index') }}" class="nav-link {{ Request::is('gudang') ? 'active' : '' }}">
-              <i class="bi bi-box"></i> Dashboard Stok
-            </a>
-          </li>
-          {{-- Jika kamu aktifkan omset, tambahkan di sini --}}
-          {{-- <li class="nav-item">
-            <a href="{{ route('gudang.omset') }}" class="nav-link {{ Request::is('gudang/omset') ? 'active' : '' }}">
-              <i class="bi bi-graph-up"></i> Dashboard Omset
-            </a>
-          </li> --}}
-        </ul>
-      </div>
+        <a href="{{ route('gudang.index') }}" class="nav-link {{ Request::is('gudang') ? 'active' : '' }}">
+          <i class="bi bi-box"></i> Dashboard
+        </a>
     </li>
 
     @if($user && strtolower($user['type_akun']) !== 'kasirdc')
@@ -206,8 +208,8 @@
     @endif
 
     <li class="nav-item">
-      <a href="/gudang/keluar" class="nav-link {{ Request::is('gudang/keluar') ? 'active' : '' }}">
-        <i class="bi bi-box-arrow-up"></i> Barang Keluar
+      <a href="/gudang/pesanan" class="nav-link {{ Request::is('gudang/pesanan') ? 'active' : '' }}">
+        <i class="bi bi-box-arrow-up"></i> Pesanan Bahan Baku
       </a>
     </li>
 
@@ -233,7 +235,12 @@
     </li>
 
     <li class="nav-item">
-      {{-- ✅ UPDATED: The aria-expanded and collapse 'show' class now checks for any URL starting with 'gudang/laporan*' --}}
+      <a href="{{ route('gudang.tabelpaket') }}" class="nav-link {{ Request::is('gudang/tabelpaket') ? 'active' : '' }}">
+        <i class="bi bi-truck"></i> Kelola Paket Bahan Baku
+      </a>
+    </li>
+
+    <li class="nav-item">
       <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#laporanMenu" role="button" aria-expanded="{{ Request::is('gudang/laporan*') ? 'true' : 'false' }}" aria-controls="laporanMenu">
         <div>
           <i class="bi bi-file-earmark-text"></i> <span>Data Laporan</span>
@@ -243,32 +250,19 @@
       <div class="collapse {{ Request::is('gudang/laporan*') ? 'show' : '' }}" id="laporanMenu">
         <ul class="nav flex-column ms-4">
           <li class="nav-item">
-            {{-- Assuming the URL is 'gudang/laporan/penjualan-bahanbaku' --}}
             <a href="{{ route('gudang.tabelpenjualan') }}" class="nav-link {{ Request::is('gudang/laporan/penjualan-bahanbaku') ? 'active' : '' }}">
               <i class="bi bi-bag-check"></i> Penjualan Bahan
             </a>
           </li>
           <li class="nav-item">
-            {{-- Assuming the URL is 'gudang/laporan/pengeluaran' --}}
             <a href="{{ route('gudang.transaksi.index') }}" class="nav-link {{ Request::is('gudang/laporan/pengeluaran') ? 'active' : '' }}">
               <i class="bi bi-cash-stack"></i> Pencatatan Transaksi
             </a>
-          </li>
-          {{-- ✅ MOVED: Struk menu is now inside Data Laporan --}}
-          <li class="nav-item">
-            {{-- You need to define this route, e.g., 'gudang.struk'. URL pattern is assumed. --}}
-           <a href="{{ route('gudang.strukdc') }}" 
-               class="nav-link {{ Request::is('gudang/strukdc*') ? 'active' : '' }}">
-               <i class="bi bi-receipt me-2"></i> Daftar Struk DC
-            </a>
-
           </li>
         </ul>
       </div>
     </li>
     @endif
-
-    {{-- Struk menu has been moved up --}}
 
     <li class="nav-item">
       <a href="/home" class="nav-link">
@@ -324,6 +318,8 @@
     updateDateTime();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   @yield('scripts')
 </body>
 </html>

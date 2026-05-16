@@ -33,10 +33,10 @@ class BostonGudangCharts
 
         $jumlahPengeluaran = DB::table('tb_transaksi')
             ->join('tb_pengeluaran', 'tb_transaksi.id_transaksi', '=', 'tb_pengeluaran.id_transaksi')
-            ->join('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->join('tb_paket', 'tb_pengeluaran.id_paket', '=', 'tb_paket.id_paket')
             ->whereYear('tanggal_transaksi', $tahun)
             ->whereMonth('tanggal_transaksi', $angkaBulan)
-            ->where('tb_bahanbaku.jenis_bahan', $data)
+            ->where('tb_paket.nama_paket', $data)
             ->where('tb_transaksi.jenis_transaksi', '=', 'Pengeluaran')
             ->distinct() // pastikan hanya 1 per transaksi
             ->sum('tb_transaksi.total');

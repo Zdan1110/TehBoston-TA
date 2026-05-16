@@ -123,9 +123,9 @@
                                 <th>Tanggal Input</th>
                                 @unless($isKasir)
                                     <th>Struk</th>
+                                    <th>Action</th>
                                 @endunless
                                 <!-- <th>Status</th> -->
-                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -473,7 +473,7 @@
                         <select class="form-select" id="bahan_bakumasuk" name="bahan_bakumasuk" required>
                             <option value="" disabled selected hidden>-- Pilih Bahan Baku --</option>
                             @foreach($bahanbaku as $bahan)
-                                <option value="{{ $bahan->id_bahanbaku }}" data-harga="{{ $bahan->harga_jual }}">
+                                <option value="{{ $bahan->id_bahanbaku }}" data-harga="{{ $bahan->harga_modal }}">
                                     {{ $bahan->nama_bahan }}
                                 </option>
                             @endforeach
@@ -1053,7 +1053,7 @@ $(document).on('click', '.btn-edit-masuk', function() {
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Total Harga</label>
-                                <input type="number" class="form-control input-harga" style="background-color:rgb(212, 212, 212);" name="harga[]" value="${item.harga_jual * item.jumlah}" data-harga-awal="${item.harga_jual}" readonly>
+                                <input type="number" class="form-control input-harga" style="background-color:rgb(212, 212, 212);" name="harga[]" value="${item.harga_modal * item.jumlah}" data-harga-awal="${item.harga_modal}" readonly>
                             </div>
                             <button type="button" class="btn btn-danger btn-sm btn-hapus-bahanmasuk" data-id="${item.id_pemasukan}">
                                 <i class="bi bi-trash"></i> Hapus Transaksi Bahan baku ke-${index + 1}

@@ -71,7 +71,10 @@
                         <div class="form-group">
                             <div class="input-group @error('password') is-invalid @enderror">
                                 <i class="fas fa-lock"></i>
-                                <input type="password" class="form-control" name="password" placeholder="Password" required>
+                                <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Password" required>
+                                <span class="toggle-password" onclick="togglePassword('loginPassword', this)">
+                                    <i class="fas fa-eye"></i>
+                                </span>
                             </div>
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -138,6 +141,9 @@
                             <div class="input-group @error('password') is-invalid @enderror">
                                 <i class="fas fa-lock"></i>
                                 <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                                <span class="toggle-password" onclick="togglePassword('password', this)">
+                                    <i class="fas fa-eye"></i>
+                                </span>
                             </div>
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -147,6 +153,9 @@
                             <div class="input-group">
                                 <i class="fas fa-lock"></i>
                                 <input type="password" class="form-control" id="confirmPassword" name="password_confirmation" placeholder="Konfirmasi Password" required>
+                                <span class="toggle-password" onclick="togglePassword('confirmPassword', this)">
+                                    <i class="fas fa-eye"></i>
+                                </span>
                             </div>
                             <div class="error-message" id="passwordError"></div>
                         </div>
@@ -216,6 +225,21 @@
                 @endforeach
             @endif
         });
+
+        function togglePassword(inputId, iconElement) {
+            const input = document.getElementById(inputId);
+            const icon = iconElement.querySelector('i');
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
     </script>
 </body>
 </html>

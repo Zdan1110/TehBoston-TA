@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class KasirController extends Controller
 {
@@ -88,7 +90,6 @@ class KasirController extends Controller
             ->join('tb_penjualan as p', 'dp.id_penjualan', '=', 'p.id_penjualan')
             ->select(
                 'p.id_penjualan',
-                'p.pelanggan',     // <-- Added this line to select the customer name
                 'dp.nama_produk',
                 'dp.jumlah',
                 'dp.harga',
@@ -257,7 +258,6 @@ public function laporan(Request $request)
                 DB::table('tb_penjualan')->insert([
                     'id_penjualan' => $idPenjualan,
                     'id_franchise' => $idFranchise->id_franchise,
-                    'pelanggan' => $request->kode, // This value is inserted here
                     'harga' => $request->total,
                     'tanggal' => Carbon::now(),
                 ]);
@@ -298,7 +298,6 @@ public function laporan(Request $request)
                 DB::table('tb_penjualan')->insert([
                     'id_penjualan' => $idPenjualan,
                     'id_franchise' => $idFranchise,
-                    'pelanggan' => $request->kode, 
                     'harga' => $request->total,
                     'tanggal' => Carbon::now(),
                 ]);
@@ -336,7 +335,7 @@ public function laporan(Request $request)
             Log::error("Checkout failed: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Checkout gagal: ' . $e->getMessage() // tampilkan error
+                'message' => 'Checkout gagal: ' . $e->getMessage() 
             ]);
         }
     }
@@ -402,6 +401,361 @@ public function laporan(Request $request)
                 ->where('tb_penjualan.id_penjualan', $id_penjualan)
                 ->first();
         return view('kasir.v_print', compact('data', 'datadetail'));
+    }
+
+    public function OrderStok() 
+    {
+        $user = Session::get('user');
+
+        if (!$user || !isset($user['id_akun'])) {
+            return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+
+        $alamatfranchise = DB::table('tb_franchise')
+            ->where('id_franchise', $user['id_franchise'])
+            ->select('alamat_usaha', 'nama_franchise', 'id_franchise')
+            ->first();
+
+        $paket = DB::table('tb_paket')
+            ->leftJoin('tb_detailpaket', 'tb_paket.id_paket', '=', 'tb_detailpaket.id_paket')
+            ->leftJoin('tb_bahanbaku', 'tb_detailpaket.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->select(
+                'tb_paket.id_paket',
+                'tb_paket.nama_paket',
+                'tb_paket.harga',
+                'tb_paket.gambar_paket',
+                DB::raw("GROUP_CONCAT(tb_bahanbaku.nama_bahan SEPARATOR ', ') as bahan"),
+                DB::raw("GROUP_CONCAT(tb_detailpaket.jumlah SEPARATOR ', ') as jumlah"),
+                DB::raw("GROUP_CONCAT(tb_bahanbaku.satuan SEPARATOR ', ') as satuan"),
+
+                DB::raw("
+                    MIN(FLOOR(tb_bahanbaku.stok / tb_detailpaket.jumlah)) as max_pesan
+                ")
+            )
+            ->groupBy(
+                'tb_paket.id_paket',
+                'tb_paket.nama_paket',
+                'tb_paket.harga',
+                'tb_paket.gambar_paket'
+            )
+            ->get();
+            
+        return view('kasir.v_order', compact('paket', 'alamatfranchise'));
+    }
+
+    public function storeOrder(Request $request)
+    {
+        $request->validate([
+            'id_franchise' => 'required',
+            'cart' => 'required',
+            'total' => 'required|numeric|min:1',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $cart = json_decode($request->cart, true);
+
+            if (!$cart || count($cart) === 0) {
+                return redirect()->back()->with('error', 'Pilih minimal 1 paket.');
+            }
+
+            $lastTransaksi = DB::table('tb_transaksi')
+                ->orderBy('id_transaksi', 'desc')
+                ->first();
+
+            if ($lastTransaksi) {
+                $lastNumber = (int) substr($lastTransaksi->id_transaksi, 1);
+                $newNumber = $lastNumber + 1;
+            } else {
+                $newNumber = 1;
+            }
+
+            $idTransaksi = 'G' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+
+            DB::table('tb_transaksi')->insert([
+                'id_transaksi' => $idTransaksi,
+                'tanggal_transaksi' => Carbon::now(),
+                'jenis_transaksi' => 'pengeluaran',
+                'total' => $request->total,
+            ]);
+
+            $lastPengeluaran = DB::table('tb_pengeluaran')
+                ->orderBy('id_pengeluaran', 'desc')
+                ->first();
+
+            if ($lastPengeluaran) {
+                $lastNumberPengeluaran = (int) substr($lastPengeluaran->id_pengeluaran, 2);
+            } else {
+                $lastNumberPengeluaran = 0;
+            }
+
+            $lastDetailPengeluaran = DB::table('tb_detailpengeluaran')
+                ->orderBy('id_detailpengeluaran', 'desc')
+                ->first();
+
+            $lastNumberDetail = $lastDetailPengeluaran
+                ? (int) substr($lastDetailPengeluaran->id_detailpengeluaran, 2)
+                : 0;
+
+            foreach ($cart as $item) {
+                $lastNumberPengeluaran++;
+
+                $idPengeluaran = 'PG' . str_pad($lastNumberPengeluaran, 4, '0', STR_PAD_LEFT);
+                $subtotal = $item['jumlah'] * $item['harga'];
+
+                DB::table('tb_pengeluaran')->insert([
+                    'id_pengeluaran' => $idPengeluaran,
+                    'id_transaksi' => $idTransaksi,
+                    'id_franchise' => $request->id_franchise,
+                    'id_paket' => $item['id_paket'],
+                    'jumlah' => $item['jumlah'],
+                    'harga' => $subtotal,
+                ]);
+
+                $detailPaket = DB::table('tb_detailpaket')
+                    ->where('id_paket', $item['id_paket'])
+                    ->get();
+
+                foreach ($detailPaket as $detail) {
+                    $lastNumberDetail++;
+
+                    $idDetailPengeluaran = 'DP' . str_pad($lastNumberDetail, 4, '0', STR_PAD_LEFT);
+
+                    DB::table('tb_detailpengeluaran')->insert([
+                        'id_detailpengeluaran' => $idDetailPengeluaran,
+                        'id_pengeluaran' => $idPengeluaran,
+                        'id_bahanbaku' => $detail->id_bahanbaku,
+                        'jumlah' => $detail->jumlah * $item['jumlah'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('pembayaran.pilih', $idTransaksi);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error simpan order paket', [
+                'message' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+
+            return redirect()->back()->with('error', 'Order gagal disimpan.');
+        }
+    }
+
+    public function pilihPembayaran($id)
+    {
+        $transaksi = DB::table('tb_transaksi')
+        ->where('id_transaksi', $id)
+        ->first();
+
+        if (!$transaksi) {
+            return redirect()->back()->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        $rows = DB::table('tb_pengeluaran')
+            ->leftJoin('tb_paket', 'tb_pengeluaran.id_paket', '=', 'tb_paket.id_paket')
+            ->leftJoin('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+            ->leftJoin('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->where('tb_pengeluaran.id_transaksi', $id)
+            ->select(
+                'tb_pengeluaran.id_pengeluaran',
+                'tb_pengeluaran.jumlah as jumlah_paket',
+                'tb_pengeluaran.harga',
+                'tb_paket.nama_paket',
+                'tb_detailpengeluaran.jumlah as jumlah_bahan',
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan'
+            )
+            ->get();
+
+        $detail = [];
+
+        foreach ($rows as $row) {
+            $id = $row->id_pengeluaran;
+
+            if (!isset($detail[$id])) {
+                $detail[$id] = [
+                    'nama_paket' => $row->nama_paket,
+                    'jumlah_paket' => $row->jumlah_paket,
+                    'harga' => $row->harga,
+                    'bahan' => []
+                ];
+            }
+
+            $detail[$id]['bahan'][] = [
+                'nama_bahan' => $row->nama_bahan,
+                'jumlah' => $row->jumlah_bahan,
+                'satuan' => $row->satuan
+            ];
+        }
+
+        return view('kasir.pembayaran', [
+            'transaksi' => $transaksi,
+            'detail' => $detail
+        ]);
+    }
+
+    public function bayarTunai($id)
+    {
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $id)
+            ->update([
+                'metode_pembayaran' => 'Tunai',
+                'status_pembayaran' => 'pending',
+                'status_transaksi' => 'Sedang Di Proses',
+            ]);
+
+        return redirect()->route('riwayat.pesanan')->with('success', 'Order Bahan Baku Berhasil.');
+    }
+
+    public function RiwayatPesanan()
+    {
+        $user = Session::get('user');
+
+        if (!$user || !isset($user['id_akun'])) {
+            return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+        $idfranchise = Session::get('user')['id_franchise'];
+
+        $rows = DB::table('tb_transaksi')
+            ->leftJoin('tb_pengeluaran', 'tb_transaksi.id_transaksi', '=', 'tb_pengeluaran.id_transaksi')
+            ->leftJoin('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
+            ->leftJoin('tb_paket', 'tb_pengeluaran.id_paket', '=', 'tb_paket.id_paket')
+            ->leftJoin('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+            ->leftJoin('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->where('tb_transaksi.jenis_transaksi', 'pengeluaran')
+            ->where('tb_pengeluaran.id_franchise', $idfranchise)
+            ->select(
+                'tb_transaksi.id_transaksi',
+                'tb_transaksi.tanggal_transaksi',
+                'tb_transaksi.total',
+                'tb_transaksi.metode_pembayaran',
+                'tb_transaksi.status_pembayaran',
+                'tb_transaksi.status_transaksi',
+
+                'tb_pengeluaran.id_pengeluaran',
+                'tb_pengeluaran.jumlah as jumlah_paket',
+                'tb_pengeluaran.harga as subtotal_paket',
+
+                'tb_franchise.nama_franchise',
+                'tb_franchise.alamat_usaha',
+
+                'tb_paket.nama_paket',
+
+                'tb_bahanbaku.nama_bahan',
+                'tb_bahanbaku.satuan',
+                'tb_detailpengeluaran.jumlah as jumlah_bahan'
+            )
+            ->orderBy('tb_transaksi.tanggal_transaksi', 'desc')
+            ->get();
+
+        $pesanan = [];
+
+        foreach ($rows as $row) {
+            $idTransaksi = $row->id_transaksi;
+            $idPengeluaran = $row->id_pengeluaran;
+
+            if (!isset($pesanan[$idTransaksi])) {
+                $pesanan[$idTransaksi] = [
+                    'id_transaksi' => $row->id_transaksi,
+                    'tanggal_transaksi' => $row->tanggal_transaksi,
+                    'total' => $row->total,
+                    'metode_pembayaran' => $row->metode_pembayaran,
+                    'status_pembayaran' => $row->status_pembayaran,
+                    'status_transaksi' => $row->status_transaksi,
+                    'nama_franchise' => $row->nama_franchise,
+                    'alamat_usaha' => $row->alamat_usaha,
+                    'paket' => []
+                ];
+            }
+
+            if ($idPengeluaran && !isset($pesanan[$idTransaksi]['paket'][$idPengeluaran])) {
+                $pesanan[$idTransaksi]['paket'][$idPengeluaran] = [
+                    'nama_paket' => $row->nama_paket,
+                    'jumlah_paket' => $row->jumlah_paket,
+                    'subtotal_paket' => $row->subtotal_paket,
+                    'bahan' => []
+                ];
+            }
+
+            if ($idPengeluaran && $row->nama_bahan) {
+                $pesanan[$idTransaksi]['paket'][$idPengeluaran]['bahan'][] = [
+                    'nama_bahan' => $row->nama_bahan,
+                    'jumlah_bahan' => $row->jumlah_bahan,
+                    'satuan' => $row->satuan,
+                ];
+            }
+        }
+
+        return view('kasir.riwayatpesanan', compact('pesanan'));
+    }
+
+    public function bayarMidtrans($id)
+    {
+        $transaksi = DB::table('tb_transaksi')
+            ->where('id_transaksi', $id)
+            ->first();
+
+        if (!$transaksi) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi tidak ditemukan.'
+            ], 404);
+        }
+
+        if (!empty($transaksi->snap_token)) {
+            return response()->json([
+                'success' => true,
+                'snap_token' => $transaksi->snap_token
+            ]);
+        }
+
+        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+
+        $orderIdMidtrans = $transaksi->id_transaksi . '-' . time();
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => $orderIdMidtrans,
+                'gross_amount' => (int) $transaksi->total,
+            ],
+        ];
+
+        $snapToken = Snap::getSnapToken($params);
+
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $id)
+            ->update([
+                'metode_pembayaran' => 'transfer',
+                'status_pembayaran' => 'pending',
+                'snap_token' => $snapToken,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'snap_token' => $snapToken
+        ]);
+    }
+
+    public function successMidtrans($id)
+    {
+        DB::table('tb_transaksi')
+            ->where('id_transaksi', $id)
+            ->update([
+                'status_pembayaran' => 'settlement',
+                'status_transaksi' => 'Sedang Di Proses',
+            ]);
+
+        return redirect()->route('riwayat.pesanan')->with('success', 'Pembayaran berhasil.');
     }
 
     public function stokFranchise()

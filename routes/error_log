@@ -1,0 +1,12 @@
+[20-Oct-2025 16:42:47 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/tehbosto/public_html/routes/console.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/tehbosto/public_html/routes/console.php on line 17
+[20-Oct-2025 16:42:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/tehbosto/public_html/routes/api.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/tehbosto/public_html/routes/api.php on line 17
+[20-Oct-2025 16:42:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/tehbosto/public_html/routes/web.php:15
+Stack trace:
+#0 {main}
+  thrown in /home/tehbosto/public_html/routes/web.php on line 15

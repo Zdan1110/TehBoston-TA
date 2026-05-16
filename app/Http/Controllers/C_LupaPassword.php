@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class C_LupaPassword extends Controller
 {
@@ -23,35 +24,53 @@ class C_LupaPassword extends Controller
             'email' => 'required|email',
         ]);
 
-        // Cek apakah email ada di tb_akun
-        $cekEmail = DB::table('tb_akun')->where('email', $request->email)->first();
-
-        if (!$cekEmail) {
-            return redirect()->back()->with('error', 'Email tidak terdaftar.');
-        }
-
-        // Generate kode OTP (6 digit angka)
-        $kodeOtp = random_int(100000, 999999);
-
-        // Simpan ke table password_resets
-        DB::table('password_resets')->updateOrInsert(
-            ['email' => $request->email],
-            [
-                'token' => $kodeOtp,
-                'created_at' => Carbon::now()
-            ]
-        );
-
-        // Kirim email OTP
         try {
+            // Cek email
+            $cekEmail = DB::table('tb_akun')->where('email', $request->email)->first();
+
+            if (!$cekEmail) {
+                Log::warning('OTP gagal - email tidak terdaftar', [
+                    'email' => $request->email
+                ]);
+
+                return redirect()->back()->with('error', 'Email tidak terdaftar.');
+            }
+
+            // Generate OTP
+            $kodeOtp = random_int(100000, 999999);
+
+            // Simpan OTP
+            DB::table('password_resets')->updateOrInsert(
+                ['email' => $request->email],
+                [
+                    'token' => $kodeOtp,
+                    'created_at' => Carbon::now()
+                ]
+            );
+
+            // Kirim email
             Mail::raw("Kode OTP untuk reset password Teh Boston Anda adalah: {$kodeOtp}", function ($message) use ($request) {
                 $message->to($request->email)
                         ->subject('Kode OTP Reset Password - Teh Boston');
             });
 
+            Log::info('OTP berhasil dikirim', [
+                'email' => $request->email,
+                'otp' => $kodeOtp
+            ]);
+
             return redirect('/resetpassword')->with('success', 'Kode OTP berhasil dikirim ke email Anda.');
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal mengirim email. Pastikan konfigurasi email benar.');
+
+            Log::error('Error kirim OTP', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'email' => $request->email ?? null
+            ]);
+
+            return redirect()->back()->with('error', 'Gagal mengirim email. Cek konfigurasi email.');
         }
     }
 

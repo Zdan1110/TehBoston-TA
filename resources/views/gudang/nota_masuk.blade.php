@@ -116,13 +116,19 @@
     </div>
 
     <script>
-        window.addEventListener('load', function () {
+        window.onload = function () {
             window.print();
-        });
+        };
 
         window.onafterprint = function () {
-            window.location.href = "{{ url('gudang/keluar') }}";
+            window.location.href = "{{ url('gudang/riwayat') }}";
         };
+
+        window.matchMedia('print').addListener(function(mql) {
+            if (!mql.matches) {
+                window.location.href = "{{ url('gudang/riwayat') }}";
+            }
+        });
     </script>
 </body>
 </html>

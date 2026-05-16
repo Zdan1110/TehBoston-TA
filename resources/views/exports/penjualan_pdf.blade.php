@@ -40,8 +40,8 @@
 
             @foreach ($data as $index => $row)
                 @php
-                    $modal = $row->harga_modal * $row->jumlah;
-                    $jual = $row->harga_jual * $row->jumlah;
+                    $modal = $row->harga_modal_total;
+                    $jual = $row->harga_jual_total;
                     $laba = $row->laba;
                     $totalModal += $modal;
                     $totalJual += $jual;

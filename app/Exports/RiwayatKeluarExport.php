@@ -21,7 +21,8 @@ class RiwayatKeluarExport implements FromView
     {
         $riwayatkeluar = DB::table('tb_transaksi')
             ->join('tb_pengeluaran', 'tb_pengeluaran.id_transaksi', '=', 'tb_transaksi.id_transaksi')
-            ->leftJoin('tb_bahanbaku', 'tb_pengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->leftJoin('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+            ->leftJoin('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->leftJoin('tb_franchise', 'tb_pengeluaran.id_franchise', '=', 'tb_franchise.id_franchise')
             ->select(
                 'tb_transaksi.id_transaksi',

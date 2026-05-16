@@ -13,10 +13,10 @@
 
         <div class="flex flex-wrap gap-3 w-full md:w-auto">
             @if($type_akun !== 'kasir')
-                <button id="openAddModal" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors w-full sm:w-auto">
-                    <i class="fas fa-plus-circle mr-2"></i>
-                    <span>Tambah Stok</span>
-                </button>
+                <a href="/orderstok" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors w-full sm:w-auto">
+                    <i class="fa-solid fa-cart-plus mr-2"></i>
+                    <span>Order Stok</span>
+                </a>
             @endif
             
             <div class="relative w-full sm:w-auto">
@@ -54,9 +54,6 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Satuan</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        @if($type_akun !== 'kasir')
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                        @endif
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -96,23 +93,6 @@
                                     {{ $status }}
                                 </span>
                             </td>
-                            @if($type_akun !== 'kasir')
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex space-x-2">
-                                    <a href="/editstok/{{ $item->id_stokfranchise }}" 
-                                        class="text-blue-600 hover:text-blue-900 p-2 hover:bg-gray-100 rounded-full">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('stokbahan.destroy', $item->id_stokfranchise) }}" method="POST" class="delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900 p-2 hover:bg-gray-100 rounded-full">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                            @endif
                         </tr>
                     @empty
                         <tr>
@@ -141,13 +121,6 @@
                                 class="text-blue-600 hover:text-blue-900 p-2 hover:bg-gray-100 rounded-full">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form action="{{ route('stokbahan.destroy', $item->id_stokfranchise) }}" method="POST" class="delete-form">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-900 p-2 hover:bg-gray-100 rounded-full">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
                         </div>
                     </div>
                     

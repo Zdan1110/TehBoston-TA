@@ -112,7 +112,6 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Pelanggan</th> {{-- <-- ADDED THIS HEADER --}}
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu (Jumlah terjual)</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga Item</th> {{-- Changed from 'Total Harga' as this is per item detail --}}
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu Transaksi</th> {{-- Changed from 'Waktu' for clarity --}}
@@ -124,7 +123,6 @@
                                 @foreach($penjualan as $item)
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $no++ }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->pelanggan }}</td> {{-- <-- ADDED THIS CELL --}}
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->nama_produk }} ({{ $item->jumlah }})</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp{{ number_format($item->harga, 0, ',', '.') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y H:i') }}</td>

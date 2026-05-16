@@ -690,7 +690,6 @@ public function download($id_qr)
                     ->first();
 
                 if (!$mitra) {
-                    // Generate ID mitra
                     $lastMitra = DB::table('tb_mitra')
                         ->select('id_mitra')
                         ->orderByDesc('id_mitra')
@@ -728,34 +727,69 @@ public function download($id_qr)
         return response()->json($notifikasi);
     }
     
-        public function updateAkses(Request $request, $id_franchise)
+    public function updateAkses(Request $request, $id_franchise)
     {
         $request->validate([
             'akses' => 'required'
         ]);
-        
+
+        DB::beginTransaction();
+
         try {
+
             DB::table('tb_franchise')
                 ->where('id_franchise', $id_franchise)
                 ->update([
                     'langganan' => $request->akses
                 ]);
 
-                $nama_franchise = DB::table('tb_franchise')
-                ->where('id_franchise', $id_franchise)
-                ->select('tb_franchise.nama_franchise')
-                ->first();
-    
-                $email = DB::table('tb_franchise')
-                            ->leftJoin('tb_mitra', 'tb_franchise.id_mitra', '=', 'tb_mitra.id_mitra')
-                            ->leftJoin('tb_akun', 'tb_mitra.id_akun', '=', 'tb_akun.id_akun')
-                            ->where('tb_franchise.id_franchise', $id_franchise)
-                            ->select('tb_akun.email')
-                            ->first();
-    
+            if ($request->akses == 'Berlangganan') {
+
+                $cekFranchise = DB::table('tb_stokfranchise')
+                    ->where('id_franchise', $id_franchise)
+                    ->exists();
+
+                if (!$cekFranchise) {
+
+                    $bahanbakus = DB::table('tb_bahanbaku')
+                        ->select('id_bahanbaku')
+                        ->get();
+
+                    $lastStok = DB::table('tb_stokfranchise')
+                        ->orderBy('id_stokfranchise', 'desc')
+                        ->first();
+
+                    $lastNumber = $lastStok
+                        ? (int) substr($lastStok->id_stokfranchise, 2)
+                        : 0;
+
+                    foreach ($bahanbakus as $bahan) {
+
+                        $lastNumber++;
+
+                        $idStokFranchise = 'SF' . str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
+
+                        DB::table('tb_stokfranchise')->insert([
+                            'id_stokfranchise' => $idStokFranchise,
+                            'id_franchise' => $id_franchise,
+                            'id_bahanbaku' => $bahan->id_bahanbaku,
+                            'stok' => 0,
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
             return back()->with('success', 'Status berlangganan berhasil diperbarui.');
+
         } catch (\Exception $e) {
+
+            DB::rollBack();
+
             Log::error('Gagal update status berlangganan: ' . $e->getMessage());
+
             return back()->with('error', 'Gagal memperbarui status berlangganan.');
         }
     }
@@ -767,28 +801,22 @@ public function download($id_qr)
             'url'   => 'required|url',
         ]);
 
-        // Secret key rahasia (jangan ditaruh di code, taruh di .env)
         $secret = env('QR_SECRET_KEY', 'mySecretKey123');
 
-        // Buat hash sederhana (misalnya sha256)
         $hash = hash_hmac('sha256', $request->id_qr, $secret);
 
-        // Data QR berisi id + hash
         $data = $request->id_qr . '|' . $hash;
 
-        // Nama file QR disimpan sesuai ID
         $fileName = $request->id_qr . '.png';
         $filePath = public_path('uploads/qrcode/' . $fileName);
 
-        // generate dan simpan sebagai PNG binary
         QrCode::format('png')
             ->size(300)
             ->margin(2)
-            ->color(0, 0, 0)               // Warna QR hitam
+            ->color(0, 0, 0)
             ->backgroundColor(255, 255, 255, 0)
             ->generate($data, $filePath);
 
-        // Simpan ke database
         DB::table('tb_qr')->insert([
             'id_qr'     => $request->id_qr,
             'url'       => $request->url,

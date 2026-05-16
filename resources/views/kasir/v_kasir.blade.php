@@ -1,7 +1,5 @@
-@section ('Title')
-Kasir
-@endsection
 @extends('kasir.template_kasir')
+@section('title', 'Kasir')
 @section('content')
 @section('content')
 
@@ -41,7 +39,7 @@ Kasir
   }
   
   .btn-hapus {
-  background-color: #dc3545; /* Merah Bootstrap */
+  background-color: #dc3545; 
   color: white;
   border: none;
   padding: 6px 12px;
@@ -116,7 +114,7 @@ Kasir
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  background-color: #ff4d4d; /* Default merah */
+  background-color: #ff4d4d; 
   color: white;
   padding: 12px 20px;
   border-radius: 8px;
@@ -129,7 +127,7 @@ Kasir
 }
 
 .alert.success {
-  background-color: #28a745; /* Hijau untuk sukses */
+  background-color: #28a745; 
 }
 
 .alert.hidden {
@@ -137,13 +135,11 @@ Kasir
   pointer-events: none;
 }
 
-/* Tambahkan highlight untuk best seller */
 .menu-item.best-seller {
   border: 2px solid gold;
   position: relative;
 }
 
-/* Gaya pita Best Seller */
 .ribbon {
   position: absolute;
   top: -8px;
@@ -158,19 +154,40 @@ Kasir
   z-index: 10;
 }
 
+.btn-jumlah {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #000;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+
+    margin-top: 5px;
+    padding-bottom: 4px;
+}
+
+.btn-jumlah:hover {
+    background: #f0f0f0;
+}
+
 @media (max-width: 768px) {
-    /* ... (CSS lainnya jangan diubah) ... */
 
     .menu-item {
-        /* Mengubah lebar untuk membuat 3 kolom */
-        width: calc(33.33% - 11px); /* Kalkulasi untuk 3 kolom dengan gap 16px */
+        width: calc(33.33% - 11px); 
         
         display: flex;
         flex-direction: column;
         justify-content: space-between;
     }
     
-    /* Pastikan CSS untuk gambar dan teks masih ada */
     .menu-item img {
         width: 100%;
         height: auto;
@@ -180,13 +197,13 @@ Kasir
 
     .menu-item p {
         margin-top: 8px;
-        font-size: 12px; /* Anda mungkin perlu sedikit mengecilkan font */
+        font-size: 12px; 
         line-height: 1.2;
     }
     
     .product-name {
         display: block;
-        min-height: 29px; /* Disesuaikan untuk font 12px */
+        min-height: 29px;
     }
 
     .product-price {
@@ -213,11 +230,6 @@ Kasir
     </div>
 
     <div class="order-section">
-      <div class="form-pelanggan">
-        <h3>Nama Pelanggan</h3>
-        <input type="text" id="kode-pelanggan" placeholder="Masukkan Nama Pelanggan" style="padding: 8px; width: 100%; border-radius: 6px; border: 1px solid #ccc;">
-      </div>
-      
       <div class="pesanan">
         <h3>Pesanan Anda</h3>
         <ul id="order-list"></ul>
@@ -239,7 +251,6 @@ Kasir
       <thead>
         <tr>
           <th>No</th>
-          <th>Pelanggan</th>
           <th>Menu</th>
           <th>Jumlah/Menu</th>
           <th>Total Harga/Menu</th>
@@ -247,17 +258,51 @@ Kasir
         </tr>
       </thead>
       <tbody>
-      @php $no = 1; @endphp
-      @foreach($riwayat as $item)
+        @php
+            $grouped = $riwayat->groupBy('id_penjualan');
+            $no = 1;
+        @endphp
+
+        @foreach($grouped as $id_penjualan => $items)
+
+        @php
+            $first = $items->first();
+        @endphp
+
         <tr>
-          <td>{{ $no++ }}</td>
-          <td>{{ $item->pelanggan }}</td>
-          <td>{{ $item->nama_produk }}</td>
-          <td>{{ $item->jumlah }}</td>
-          <td>{{ $item->harga }}</td>
-          <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y H:i') }}</td>
+            <td>{{ $no++ }}</td>
+
+            {{-- MENU --}}
+            <td class="text-start">
+                @foreach($items as $item)
+                    <div>
+                        • {{ $item->nama_produk }}
+                    </div>
+                @endforeach
+            </td>
+
+            <td class="text-start">
+                @foreach($items as $item)
+                    <div>
+                        • {{ $item->jumlah }}
+                    </div>
+                @endforeach
+            </td>
+
+            <td class="text-start">
+                @foreach($items as $item)
+                    <div>
+                        • Rp{{ number_format((int) $item->harga, 0, ',', '.') }}
+                    </div>
+                @endforeach
+            </td>
+
+            <td>
+                {{ \Carbon\Carbon::parse($first->tanggal)->format('d-m-Y H:i') }}
+            </td>
         </tr>
-      @endforeach
+
+        @endforeach
       </tbody>
     </table>
   </div>

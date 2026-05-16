@@ -321,6 +321,8 @@ body {
     color: var(--danger-color);
 }
 
+
+
 /* Responsiveness */
 @media (max-width: 768px) {
     .container-main {

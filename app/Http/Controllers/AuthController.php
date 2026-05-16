@@ -13,23 +13,20 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'username' => 'required', // tetap gunakan nama 'username' di form
+            'username' => 'required', 
             'password' => 'required',
         ]);
 
-        // Ambil data akun berdasarkan username atau email
         $user = DB::table('tb_akun')
             ->where('username', $request->username)
             ->orWhere('email', $request->username)
             ->first();
         
 
-        // Cek apakah akun ditemukan
         if (!$user) {
             return back()->with('error', 'Username atau Email tidak ditemukan');
         }
 
-        // Cek password
         if (!Hash::check($request->password, $user->password)) {
             return back()->with('error', 'Password salah');
         }
@@ -54,22 +51,18 @@ class AuthController extends Controller
             'type_akun' => $user->type_akun
         ]);
 
-        // Regenerasi session jika menggunakan Auth Laravel
         if (Auth::attempt(['username' => $user->username, 'password' => $request->password])) {
             $request->session()->regenerate();
         }
 
-        // Redirect berdasarkan role
         if ($user->type_akun === 'admin') {
             return redirect('/admin')->with('success', 'Login berhasil sebagai Admin');
         } else if ($user->type_akun === 'owner') {
             return redirect('/owner')->with('success', 'Login berhasil sebagai Owner');
         } else if ($user->type_akun === 'user') {
-            return redirect('/home')->with('success', 'Login berhasil sebagai User');
+            return redirect('/home')->with('success', 'Login berhasil!');
         } else if ($user->type_akun === 'kasir') {
             return redirect('/kasir')->with('success', 'Login berhasil sebagai Kasir');
-        } else if ($user->type_akun === 'mitra') {
-            return redirect('/kasir')->with('success', 'Login berhasil sebagai mitra');
         } else if ($user->type_akun === 'survey') {
             return redirect('/survey/datasurvey')->with('success', 'Login berhasil sebagai Surveyor');
         } else if ($user->type_akun === 'gudang') {
@@ -89,11 +82,10 @@ class AuthController extends Controller
 
 public function loginkasir($id_franchise)
 {
-    // Ambil salah satu kasir dari franchise
     $kasir = DB::table('tb_kasir')
         ->join('tb_akun', 'tb_kasir.id_akun', '=', 'tb_akun.id_akun')
         ->where('tb_kasir.id_franchise', $id_franchise)
-        ->select('tb_akun.*') // langsung ambil akun
+        ->select('tb_akun.*') 
         ->first();
 
     if (!$kasir) {
@@ -104,7 +96,7 @@ public function loginkasir($id_franchise)
         'id_franchise' => $id_franchise
     ]));
 
-    return redirect('/kasir')->with('success', 'Login berhasil sebagai Kasir');
+    return redirect('/dashkasir')->with('success', 'Login berhasil sebagai Kasir');
 }
 
 }

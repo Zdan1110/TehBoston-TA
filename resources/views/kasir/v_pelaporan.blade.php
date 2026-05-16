@@ -1,8 +1,7 @@
-@section ('Title')
-Laporan
-@endsection
-
 @extends('kasir.template_kasir')
+
+@section('title', 'Laporan')
+@section('page-title', 'Laporan Penjualan')
 
 @section('content')
 
@@ -134,10 +133,11 @@ Laporan
   </form>
 
   {{-- 🔹 TOMBOL CETAK PDF --}}
-  <div class="cetak-pdf">
-    <button type="button" onclick="cetakPDF()">Cetak PDF</button>
-  </div>
-
+  @if($type_akun !== 'kasir')
+    <div class="cetak-pdf">
+      <button type="button" onclick="cetakPDF()">Cetak PDF</button>
+    </div>
+  @endif
       @php
   $totalKeseluruhan = collect($penjualan)->sum('harga');
 @endphp
@@ -156,7 +156,9 @@ Laporan
           <th>Menu (Jumlah terjual)</th>
           <th>Total Harga</th>
           <th>Waktu</th>
-          <th>Aksi</th>
+          @if($type_akun !== 'kasir')
+            <th>Aksi</th>
+          @endif
         </tr>
       </thead>
       <tbody>
@@ -167,15 +169,15 @@ Laporan
             <td>{{ $item->nama_produk }}</td>
             <td>Rp{{ number_format($item->harga, 0, ',', '.') }}</td>
             <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y H:i') }}</td>
+            @if($type_akun !== 'kasir')
             <td>
-              @if($type_akun !== 'kasir')
                 <a href="{{ url('/pelaporan/delete/' . $item->id_penjualan) }}" 
                    class="btn btn-sm btn-outline-danger" 
                    onclick="return confirm('Yakin ingin menghapus data ini?')">
                    <i class="fas fa-trash-alt"></i>
                 </a>
+              </td>
               @endif
-            </td>
           </tr>
         @endforeach
       </tbody>

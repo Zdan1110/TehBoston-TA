@@ -30,8 +30,8 @@ function addToOrder(name, price) {
   listItem.innerHTML = `
     <span>${name} x <span class="jumlah">${jumlahInput}</span> - 
     <span class="subtotal">Rp${(price * jumlahInput).toLocaleString("id-ID")}</span></span>
-    <button onclick="ubahJumlah(this, 1)">+</button>
-    <button onclick="ubahJumlah(this, -1)">–</button>
+    <button onclick="ubahJumlah(this, 1)" class="btn-jumlah">+</button>
+    <button onclick="ubahJumlah(this, -1)" class="btn-jumlah">–</button>
     <span class="delete" onclick="hapusItem(this)">❌</span>
   `;
 
@@ -71,7 +71,8 @@ function hapusItem(span) {
 
 
 function checkoutOrder() {
-  const kode = document.getElementById("kode-pelanggan").value.trim();
+  const kodeInput = document.getElementById("kode-pelanggan");
+  const kode = kodeInput ? kodeInput.value.trim() : null;
   const bayar = parseInt(document.getElementById("bayar").value);
   const listItems = document.querySelectorAll("#order-list li");
 
