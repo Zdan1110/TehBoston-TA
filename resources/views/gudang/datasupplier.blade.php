@@ -47,28 +47,28 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 50px;">No</th>
-                                <th>Nama Bahan</th>
-                                <th>Jenis Bahan</th>
-                                <th>Harga Modal</th>
-                                <th>Harga Jual</th>
-                                <th>Stok</th>
-                                <th>Satuan</th>
-                                <th>Aksi</th>
+                                <th style="white-space: nowrap;">Nama Bahan</th>
+                                <th style="white-space: nowrap;">Jenis Bahan</th>
+                                <th style="white-space: nowrap;">Harga Modal</th>
+                                <th style="white-space: nowrap;">Harga Jual</th>
+                                <th style="white-space: nowrap;">Stok</th>
+                                <th style="white-space: nowrap;">Satuan</th>
+                                <th style="white-space: nowrap;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @php $no = 1; @endphp
                             @forelse($bahanbaku->where('id_supplier', $supplier->id_supplier) as $b)
                             <tr>
-                                <td>{{ $no++ }}</td>
-                                <td>{{ $b->nama_bahan }}</td>
-                                <td>{{ $b->jenis_bahan }}</td>
-                                <td>Rp {{ number_format($b->harga_modal, 0, ',', '.') }}</td>
-                                <td>Rp {{ number_format($b->harga_jual, 0, ',', '.') }}</td>
-                                <td>{{ $b->stok }}</td>
-                                <td>{{ $b->satuan }}</td>
+                                <td style="white-space: nowrap;">{{ $no++ }}</td>
+                                <td style="white-space: nowrap;">{{ $b->nama_bahan }}</td>
+                                <td style="white-space: nowrap;">{{ $b->jenis_bahan }}</td>
+                                <td style="white-space: nowrap;">Rp {{ number_format($b->harga_modal, 0, ',', '.') }}</td>
+                                <td style="white-space: nowrap;">Rp {{ number_format($b->harga_jual, 0, ',', '.') }}</td>
+                                <td style="white-space: nowrap;">{{ $b->stok }}</td>
+                                <td style="white-space: nowrap;">{{ $b->satuan }}</td>
                                 {{-- <td>{{ $b->keterangan ?? '-' }}</td> --}}
-                                <td>
+                                <td style="white-space: nowrap;" class="d-flex gap-2">
                                     <a href="/gudang/bahan/edit/{{ $b->id_bahanbaku }}/{{ $b->id_supplier }}" class="btn btn-sm btn-warning">Edit</a>
                                     <form action="{{ route('bahanbaku.delete', $b->id_bahanbaku) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus bahan ini?');">
                                         @csrf
@@ -79,7 +79,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted">Tidak ada bahan baku untuk supplier ini.</td>
+                                <td colspan="8" class="text-center text-muted" style="white-space: nowrap;">Tidak ada bahan baku untuk supplier ini.</td>
                             </tr>
                             @endforelse
                         </tbody>

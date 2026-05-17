@@ -115,15 +115,15 @@
                     <table class="table table-bordered">
                         <thead class="table-light text-center">
                             <tr>
-                                <th>No</th>
-                                <th>Nama Bahan</th>
-                                <th>Supplier</th>
-                                <th>Jumlah</th>
-                                <th>Total Harga</th>
-                                <th>Tanggal Input</th>
+                                <th style="white-space: nowrap;">No</th>
+                                <th style="white-space: nowrap;">Nama Bahan</th>
+                                <th style="white-space: nowrap;">Supplier</th>
+                                <th style="white-space: nowrap;">Jumlah</th>
+                                <th style="white-space: nowrap;">Total Harga</th>
+                                <th style="white-space: nowrap;">Tanggal Input</th>
                                 @unless($isKasir)
-                                    <th>Struk</th>
-                                    <th>Action</th>
+                                    <th style="white-space: nowrap;">Struk</th>
+                                    <th style="white-space: nowrap;">Action</th>
                                 @endunless
                                 <!-- <th>Status</th> -->
                             </tr>
@@ -131,8 +131,8 @@
                         <tbody>
                             @forelse ($riwayatmasuk as $index => $item)
                                 <tr>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td>
+                                    <td style="white-space: nowrap;">{{ $index + 1 }}</td>
+                                    <td style="white-space: nowrap;">
                                         @php $namaList = explode(',', $item->nama_bahan); @endphp
                                         <ol class="m-0 ps-3">
                                             @foreach ($namaList as $nama)
@@ -140,8 +140,8 @@
                                             @endforeach
                                         </ol>
                                     </td>
-                                    <td>{{ $item->nama_supplier }}</td>
-                                    <td>
+                                    <td style="white-space: nowrap;">{{ $item->nama_supplier }}</td>
+                                    <td style="white-space: nowrap;">
                                         @php
                                             $jumlahList = explode(',', $item->jumlah);
                                             $satuanList = explode(',', $item->satuan);
@@ -152,10 +152,10 @@
                                             @endforeach
                                         </ul>
                                     </td>
-                                    <td>Rp. {{ number_format($item->total, 0, ',', '.') }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y H:i') }}</td>
+                                    <td style="white-space: nowrap;">Rp. {{ number_format($item->total, 0, ',', '.') }}</td>
+                                    <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y H:i') }}</td>
                                     @unless($isKasir)
-                                    <td>
+                                    <td style="white-space: nowrap;">
                                         @if(!empty($item->struk))
                                             <a href="#" class="text-decoration-none text-primary"
                                                data-bs-toggle="modal"
@@ -173,7 +173,7 @@
                                     {{-- <span class="badge bg-success">Completed</span> --}}
                                 </td> -->
                                  
-                                <td class="text-center">
+                                <td class="text-center" style="white-space: nowrap;">
                                     <div class="d-flex justify-content-center align-items-center gap-2 action-buttons">
                                         <!-- Tombol Complete -->
                                         <!-- <button class="btn btn-sm btn-outline-success p-1 btn-complete" title="Selesaikan">
@@ -201,7 +201,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ $isKasir ? '6' : '7' }}" class="text-center text-muted">Tidak ada data pemasukan.</td>
+                                    <td colspan="{{ $isKasir ? '6' : '7' }}" class="text-center text-muted" style="white-space: nowrap;">Tidak ada data pemasukan.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -240,23 +240,23 @@
                     <table class="table table-bordered">
                         <thead class="table-light text-center">
                             <tr>
-                                <th>No</th>
-                                <th>Nama Bahan</th>
-                                <th>Jumlah</th>
-                                <th>Tujuan Pengeluaran</th>
-                                <th>Total Harga</th>
-                                <th>Terakhir Diperbarui</th>
+                                <th style="white-space: nowrap;">No</th>
+                                <th style="white-space: nowrap;">Nama Bahan</th>
+                                <th style="white-space: nowrap;">Jumlah</th>
+                                <th style="white-space: nowrap;">Tujuan Pengeluaran</th>
+                                <th style="white-space: nowrap;">Total Harga</th>
+                                <th style="white-space: nowrap;">Terakhir Diperbarui</th>
                                 @unless($isKasir)
-                                    <th>Struk</th>
-                                    <th>Action</th>
+                                    <th style="white-space: nowrap;">Struk</th>
+                                    <th style="white-space: nowrap;">Action</th>
                                 @endunless
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($riwayatkeluar as $index => $data)
                                 <tr>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td>
+                                    <td style="white-space: nowrap;">{{ $index + 1 }}</td>
+                                    <td style="white-space: nowrap;">
                                         @php $namaList = explode(',', $data->nama_bahan); @endphp
                                         <ol class="m-0 ps-3">
                                             @foreach ($namaList as $nama)
@@ -264,7 +264,7 @@
                                             @endforeach
                                         </ol>
                                     </td>
-                                    <td>
+                                    <td style="white-space: nowrap;">
                                         @php
                                             $jumlahList = explode(',', $data->jumlah);
                                             $satuanList = explode(',', $data->satuan ?? '');
@@ -275,17 +275,17 @@
                                             @endforeach
                                         </div>
                                     </td>
-                                    <td>
+                                    <td style="white-space: nowrap;">
                                         @php
                                             $namaFranchise = explode(',', $data->nama_franchise);
                                             $alamatUsaha = explode(',', $data->alamat_usaha);
                                         @endphp
                                         {{ trim($namaFranchise[0]) }} - {{ trim($alamatUsaha[0]) }}
                                     </td>
-                                    <td>Rp. {{ is_numeric($data->total) ? number_format($data->total, 0, ',', '.') : $data->total }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($data->updated_at)->format('d/m/Y H:i') }}</td>
+                                    <td style="white-space: nowrap;">Rp. {{ is_numeric($data->total) ? number_format($data->total, 0, ',', '.') : $data->total }}</td>
+                                    <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($data->updated_at)->format('d/m/Y H:i') }}</td>
                                     @unless($isKasir)
-                                    <td>
+                                    <td style="white-space: nowrap;">
                                         @if(!empty($data->struk))
                                             <a href="#" class="text-decoration-none text-primary"
                                                data-bs-toggle="modal"
@@ -297,7 +297,7 @@
                                             <i class="text-muted fst-italic">tidak ada struk</i>
                                         @endif
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center" style="white-space: nowrap;">
                                         <div class="d-flex justify-content-center align-items-center gap-2 action-buttons">
                                             <!-- Tombol Edit -->
                                             <button 
@@ -317,7 +317,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ $isKasir ? '6' : '7' }}" class="text-center text-muted">Tidak ada data pengeluaran.</td>
+                                    <td colspan="{{ $isKasir ? '6' : '7' }}" class="text-center text-muted" style="white-space: nowrap;">Tidak ada data pengeluaran.</td>
                                 </tr>
                             @endforelse
                         </tbody>

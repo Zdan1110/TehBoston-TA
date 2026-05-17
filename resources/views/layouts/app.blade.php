@@ -38,11 +38,6 @@
     @yield('styles')
 </head>
 <body class="bg-gray-50">
-    <!-- Loading Screen -->
-    <div id="loading-screen">
-        <img src="{{ asset('gambar/logo.png') }}" alt="Loading...">
-    </div>
-
     @include('partials.nav')
     <main>
         @yield('content')

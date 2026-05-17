@@ -178,6 +178,16 @@
     background: #f0f0f0;
 }
 
+.table-responsive-custom {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive-custom table {
+    min-width: 700px;
+}
+
 @media (max-width: 768px) {
 
     .menu-item {
@@ -222,7 +232,7 @@
         @if($isBestSeller)
           <div class="ribbon">Best Seller</div>
         @endif
-        <img src="{{ asset('uploads/produk/'.$data->gambar_produk) }}" alt="{{ $data->nama_produk }}">
+        <img src="{{ asset('uploads/produk/'.$data->gambar_produk) }}" alt="{{ $data->nama_produk }}" loading="lazy">
         <p>{{ $data->nama_produk }}<br>Rp{{ number_format($data->harga, 0, ',', '.') }}</p>
       </div>
     @endforeach
@@ -247,64 +257,66 @@
 
     <button type="button" class="checkout-btn" onclick="checkoutOrder()" href="/print">Checkout</button>
 
-    <table>
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Menu</th>
-          <th>Jumlah/Menu</th>
-          <th>Total Harga/Menu</th>
-          <th>Waktu</th>
-        </tr>
-      </thead>
-      <tbody>
-        @php
-            $grouped = $riwayat->groupBy('id_penjualan');
-            $no = 1;
-        @endphp
+    <div class="table-responsive-custom">
+      <table>
+        <thead>
+          <tr>
+            <th style="white-space: nowrap;">No</th>
+            <th style="white-space: nowrap;">Menu</th>
+            <th style="white-space: nowrap;">Jumlah/Menu</th>
+            <th style="white-space: nowrap;">Total Harga/Menu</th>
+            <th style="white-space: nowrap;">Waktu</th>
+          </tr>
+        </thead>
+        <tbody>
+          @php
+              $grouped = $riwayat->groupBy('id_penjualan');
+              $no = 1;
+          @endphp
 
-        @foreach($grouped as $id_penjualan => $items)
+          @foreach($grouped as $id_penjualan => $items)
 
-        @php
-            $first = $items->first();
-        @endphp
+          @php
+              $first = $items->first();
+          @endphp
 
-        <tr>
-            <td>{{ $no++ }}</td>
+          <tr>
+              <td style="white-space: nowrap;">{{ $no++ }}</td>
 
-            {{-- MENU --}}
-            <td class="text-start">
-                @foreach($items as $item)
-                    <div>
-                        • {{ $item->nama_produk }}
-                    </div>
-                @endforeach
-            </td>
+              {{-- MENU --}}
+              <td class="text-start" style="white-space: nowrap;">
+                  @foreach($items as $item)
+                      <div>
+                          • {{ $item->nama_produk }}
+                      </div>
+                  @endforeach
+              </td>
 
-            <td class="text-start">
-                @foreach($items as $item)
-                    <div>
-                        • {{ $item->jumlah }}
-                    </div>
-                @endforeach
-            </td>
+              <td class="text-start" style="white-space: nowrap;">
+                  @foreach($items as $item)
+                      <div>
+                          • {{ $item->jumlah }}
+                      </div>
+                  @endforeach
+              </td>
 
-            <td class="text-start">
-                @foreach($items as $item)
-                    <div>
-                        • Rp{{ number_format((int) $item->harga, 0, ',', '.') }}
-                    </div>
-                @endforeach
-            </td>
+              <td class="text-start" style="white-space: nowrap;">
+                  @foreach($items as $item)
+                      <div>
+                          • Rp{{ number_format((int) $item->harga, 0, ',', '.') }}
+                      </div>
+                  @endforeach
+              </td>
 
-            <td>
-                {{ \Carbon\Carbon::parse($first->tanggal)->format('d-m-Y H:i') }}
-            </td>
-        </tr>
+              <td style="white-space: nowrap;">
+                  {{ \Carbon\Carbon::parse($first->tanggal)->format('d-m-Y H:i') }}
+              </td>
+          </tr>
 
-        @endforeach
-      </tbody>
-    </table>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
   </div>
   <div id="custom-alert" class="alert hidden">
   <span id="alert-message"></span>

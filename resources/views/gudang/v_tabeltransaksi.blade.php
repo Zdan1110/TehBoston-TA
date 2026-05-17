@@ -80,38 +80,38 @@ Tabel Transaksi
       <table class="table table-hover align-middle mb-0">
         <thead class="bg-light-green text-dark">
           <tr>
-            <th class="ps-4 py-3 fw-semibold">No</th>
-            <th class="py-3 fw-semibold">ID Transaksi</th>
-            <th class="py-3 fw-semibold">Deskripsi</th>
-            <th class="text-center py-3 fw-semibold">Jenis</th>
-            <th class="py-3 fw-semibold">Jumlah (Rp)</th>
-            <th class="py-3 fw-semibold">Keterangan</th>
-            <th class="py-3 fw-semibold">Tanggal</th>
-            <th class="text-center py-3 fw-semibold">Aksi</th>
+            <th class="ps-4 py-3 fw-semibold" style="white-space: nowrap;">No</th>
+            <th class="py-3 fw-semibold" style="white-space: nowrap;">ID Transaksi</th>
+            <th class="py-3 fw-semibold" style="white-space: nowrap;">Deskripsi</th>
+            <th class="text-center py-3 fw-semibold" style="white-space: nowrap;">Jenis</th>
+            <th class="py-3 fw-semibold" style="white-space: nowrap;">Jumlah (Rp)</th>
+            <th class="py-3 fw-semibold" style="white-space: nowrap;">Keterangan</th>
+            <th class="py-3 fw-semibold" style="white-space: nowrap;">Tanggal</th>
+            <th class="text-center py-3 fw-semibold" style="white-space: nowrap;">Aksi</th>
           </tr>
         </thead>
         <tbody>
           @php $no = 1; @endphp
           @forelse($transaksi as $t)
           <tr class="border-bottom">
-            <td class="ps-4 py-3 fw-medium">{{ $no++ }}</td>
-            <td class="py-3">
+            <td class="ps-4 py-3 fw-medium" style="white-space: nowrap;">{{ $no++ }}</td>
+            <td class="py-3" style="white-space: nowrap;">
               <span class="badge bg-success bg-opacity-10 text-success fw-medium">{{ $t->id_transaksi }}</span>
             </td>
-            <td class="py-3">{{ $t->transaksi }}</td>
-            <td class="text-center py-3">
+            <td class="py-3" style="white-space: nowrap;">{{ $t->transaksi }}</td>
+            <td class="text-center py-3"  style="white-space: nowrap;">
               <span class="badge {{ $t->jenis == 'pemasukan' ? 'bg-success' : 'bg-danger' }} px-3 py-2 fw-medium">
                 {{ ucfirst($t->jenis) }}
               </span>
             </td>
-            <td class="py-3 fw-bold {{ $t->jenis == 'pemasukan' ? 'text-success' : 'text-danger' }}">
+            <td class="py-3 fw-bold {{ $t->jenis == 'pemasukan' ? 'text-success' : 'text-danger' }}" style="white-space: nowrap;">
               Rp {{ number_format($t->jumlah, 0, ',', '.') }}
             </td>
-            <td class="py-3">{{ $t->keterangan ?? '-' }}</td>
-            <td class="py-3 text-muted">
+            <td class="py-3" style="white-space: nowrap;">{{ $t->keterangan ?? '-' }}</td>
+            <td class="py-3 text-muted" style="white-space: nowrap;">
               {{ \Carbon\Carbon::parse($t->created_at)->format('d-m-Y H:i') }}
             </td>
-            <td class="text-center py-3">
+            <td class="text-center py-3" style="white-space: nowrap;">
               <div class="d-flex justify-content-center gap-2">
                 <a href="{{ route('transaksi.edit', $t->id_transaksi) }}"
                    class="btn btn-warning btn-sm d-flex align-items-center justify-content-center rounded-lg shadow-sm"
@@ -128,7 +128,7 @@ Tabel Transaksi
           </tr>
           @empty
           <tr class="text-center border-bottom">
-            <td colspan="8" class="py-4 text-muted fst-italic">
+            <td colspan="8" class="py-4 text-muted fst-italic" style="white-space: nowrap;">
               <i class="fas fa-inbox me-2"></i>Tidak ada data transaksi.
             </td>
           </tr>

@@ -14,21 +14,21 @@
         <table class="table table-bordered align-middle text-center">
             <thead class="table-success">
                 <tr>
-                    <th>No</th>
-                    <th>Nama Paket</th>
-                    <th>Bahan Baku</th>
-                    <th>Jumlah Bahan Baku</th>
-                    <th>Harga</th>
-                    <th>Gambar Paket</th>
-                    <th>Action</th>
+                    <th style="white-space: nowrap;">No</th>
+                    <th style="white-space: nowrap;">Nama Paket</th>
+                    <th style="white-space: nowrap;">Bahan Baku</th>
+                    <th style="white-space: nowrap;">Jumlah Bahan Baku</th>
+                    <th style="white-space: nowrap;">Harga</th>
+                    <th style="white-space: nowrap;">Gambar Paket</th>
+                    <th style="white-space: nowrap;">Action</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($paket as $index => $row)
                     <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $row->nama_paket }}</td>
-                        <td class="text-start">
+                        <td style="white-space: nowrap;">{{ $index + 1 }}</td>
+                        <td style="white-space: nowrap;">{{ $row->nama_paket }}</td>
+                        <td class="text-start" style="white-space: nowrap;">
                             @php
                                 $bahanList = explode(', ', $row->bahan);
                                 $jumlahList = explode(', ', $row->jumlah);
@@ -40,13 +40,13 @@
                             @endforeach
                         </td>
 
-                        <td class="text-start">
+                        <td class="text-start" style="white-space: nowrap;">
                             @foreach($jumlahList as $i => $jumlah)
                                 <div><strong>•</strong> {{ $jumlah }} {{ $satuanList[$i] ?? '-' }}</div>
                             @endforeach
                         </td>
-                        <td>Rp. {{ number_format($row->harga, 0, ',', '.') }}</td>
-                        <td>
+                        <td style="white-space: nowrap;">Rp. {{ number_format($row->harga, 0, ',', '.') }}</td>
+                        <td style="white-space: nowrap;">
                             @if($row->gambar_paket)
                                 <img src="{{ asset('uploads/paket/' . $row->gambar_paket) }}" 
                                     width="120" 
@@ -56,7 +56,7 @@
                                 <span class="text-muted">Tidak ada</span>
                             @endif
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" style="white-space: nowrap;">
                             <div class="d-flex justify-content-center align-items-center gap-2 action-buttons">
                                 <button 
                                     type="button"
@@ -83,7 +83,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-muted">Tidak ada data Paket.</td></tr>
+                    <tr><td colspan="7" class="text-muted" style="white-space: nowrap;">Tidak ada data Paket.</td></tr>
                 @endforelse
             </tbody>
         </table>

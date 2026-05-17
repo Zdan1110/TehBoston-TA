@@ -167,14 +167,24 @@
             </button>
             <h1 class="text-xl font-bold text-gray-800">@yield('page-title', 'Kasir')</h1>
         </div>
-        <div class="flex items-center space-x-4">
-            <span id="liveClock" class="text-sm font-semibold text-green-700"></span>
-            <div class="relative">
-                <button class="flex items-center space-x-2 focus:outline-none">
-                    <span class="text-sm font-medium text-gray-700">{{ Session::get('user')['username'] ?? 'Kasir' }}</span>
-                    <i class="fas fa-user-circle text-xl text-green-600"></i>
+        <div class="flex items-center gap-2 md:gap-4">
+
+            <span id="liveClock"
+                class="text-[10px] md:text-sm font-semibold text-green-700 leading-tight text-center md:text-left">
+            </span>
+
+            <div class="relative flex-shrink-0">
+                <button class="flex items-center gap-1 md:gap-2 focus:outline-none">
+
+                    <span class="hidden sm:block text-sm font-medium text-gray-700">
+                        {{ Session::get('user')['username'] ?? 'Kasir' }}
+                    </span>
+
+                    <i class="fas fa-user-circle text-lg md:text-xl text-green-600"></i>
+
                 </button>
             </div>
+
         </div>
     </header>
 

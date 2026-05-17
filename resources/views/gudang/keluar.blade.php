@@ -21,36 +21,36 @@
         <table class="table table-bordered align-middle text-center">
             <thead class="table-success">
                 <tr>
-                    <th>No</th>
-                    <th>ID Transaksi</th>
-                    <th>Tanggal</th>
-                    <th>Franchise</th>
-                    <th>Nama Paket</th>
-                    <th>Bahan Baku (Jumlah Bahan Baku)</th>
-                    <th>Total</th>
-                    <th>Metode Pembayaran</th>
-                    <th>Status Pembayaran</th>
-                    <th>Status Pesanan</th>
+                    <th style="white-space: nowrap;">No</th>
+                    <th style="white-space: nowrap;">ID Transaksi</th>
+                    <th style="white-space: nowrap;">Tanggal</th>
+                    <th style="white-space: nowrap;">Franchise</th>
+                    <th style="white-space: nowrap;">Nama Paket</th>
+                    <th style="white-space: nowrap;">Bahan Baku (Jumlah Bahan Baku)</th>
+                    <th style="white-space: nowrap;">Total</th>
+                    <th style="white-space: nowrap;">Metode Pembayaran</th>
+                    <th style="white-space: nowrap;">Status Pembayaran</th>
+                    <th style="white-space: nowrap;">Status Pesanan</th>
                 </tr>
             </thead>
 
             <tbody>
                 @forelse($pesanan as $row)
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
+                        <td style="white-space: nowrap;">{{ $loop->iteration }}</td>
 
-                        <td>{{ $row['id_transaksi'] }}</td>
+                        <td style="white-space: nowrap;">{{ $row['id_transaksi'] }}</td>
 
-                        <td>
+                        <td style="white-space: nowrap;">
                             {{ \Carbon\Carbon::parse($row['tanggal_transaksi'])->format('d-m-Y H:i') }}
                         </td>
 
-                        <td class="text-start">
+                        <td class="text-start" style="white-space: nowrap;">
                             <strong>{{ $row['nama_franchise'] ?? '-' }}</strong><br>
                             <small class="text-muted">{{ $row['alamat_usaha'] ?? '-' }}</small>
                         </td>
 
-                        <td class="text-start">
+                        <td class="text-start" style="white-space: nowrap;">
                             @foreach($row['paket'] as $paket)
                                 <div class="mb-2">
                                     <strong>• {{ $paket['nama_paket'] }} ( {{ $paket['jumlah_paket'] }} )</strong>
@@ -58,7 +58,7 @@
                             @endforeach
                         </td>
 
-                        <td class="text-start">
+                        <td class="text-start" style="white-space: nowrap;">
                             @foreach($row['paket'] as $paket)
                                 <div class="mb-3">
                                     <strong>{{ $paket['nama_paket'] }}</strong>
@@ -72,13 +72,13 @@
                             @endforeach
                         </td>
 
-                        <td>
+                        <td style="white-space: nowrap;">
                             Rp {{ number_format($row['total'], 0, ',', '.') }}
                         </td>
 
-                        <td>{{ $row['metode_pembayaran'] ?? '-' }}</td>
+                        <td style="white-space: nowrap;">{{ $row['metode_pembayaran'] ?? '-' }}</td>
 
-                        <td>
+                        <td style="white-space: nowrap;">
                             @if($row['metode_pembayaran'] == 'Tunai' && $row['status_pembayaran'] != 'settlement')
                                 <span class="badge bg-warning text-dark">Pending</span>
                                 <form action="{{ route('pesanan.lunasi', $row['id_transaksi']) }}" method="POST" class="mt-2">
@@ -100,7 +100,7 @@
                             @endif
                         </td>
 
-                        <td>
+                        <td style="white-space: nowrap;">
                             @if($row['status_transaksi'] == 'Sedang Di Proses')
                                 
                                 <span class="badge bg-info text-dark">Sedang Di Proses</span>
@@ -140,7 +140,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11" class="text-muted text-center">
+                        <td colspan="11" class="text-muted text-center" style="white-space: nowrap;">
                             Tidak ada data pesanan bahan baku.
                         </td>
                     </tr>
