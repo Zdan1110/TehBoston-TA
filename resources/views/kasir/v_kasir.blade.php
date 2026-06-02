@@ -232,7 +232,7 @@
         @if($isBestSeller)
           <div class="ribbon">Best Seller</div>
         @endif
-        <img src="{{ asset('uploads/produk/'.$data->gambar_produk) }}" alt="{{ $data->nama_produk }}" loading="lazy">
+        <img src="{{ asset('uploads/produk/'.$data->gambar_produk) }}" alt="{{ $data->nama_produk }}" loading="lazy" width="300" height="300">
         <p>{{ $data->nama_produk }}<br>Rp{{ number_format($data->harga, 0, ',', '.') }}</p>
       </div>
     @endforeach

@@ -25,26 +25,26 @@ Tabel Produk
                       <table class="table table-bordered">
                         <thead>
                           <tr>
-                            <th>No</th>
-                            <th>ID Produk</th>
-                            <th>Nama Produk</th>
-                            <th>HPP</th>
-                            <th>Harga Jual</th>
-                            <th>Gambar Produk</th>
-                            <th>Action</th>
+                            <th style="white-space: nowrap;">No</th>
+                            <th style="white-space: nowrap;">ID Produk</th>
+                            <th style="white-space: nowrap;">Nama Produk</th>
+                            <th style="white-space: nowrap;">HPP</th>
+                            <th style="white-space: nowrap;">Harga Jual</th>
+                            <th style="white-space: nowrap;">Gambar Produk</th>
+                            <th style="white-space: nowrap;">Action</th>
                           </tr>
                         </thead>
                         <tbody>
                           <?php $no=1; ?>
                           @foreach ($admin as $data)
                           <tr>
-                              <td>{{ $no++ }}</td>
-                              <td>{{ $data->id_produk }}</td>
-                              <td>{{ $data->nama_produk }}</td>
-                              <td>Rp {{ number_format($data->hpp, 0, ',', '.') }}</td>
-                              <td>Rp {{ number_format($data->harga, 0, ',', '.') }}</td>
-                              <td><img src="{{ url('uploads/produk/'. $data->gambar_produk) }}" width="100px"></td>
-                              <td>
+                              <td style="white-space: nowrap;">{{ $no++ }}</td>
+                              <td style="white-space: nowrap;">{{ $data->id_produk }}</td>
+                              <td style="white-space: nowrap;">{{ $data->nama_produk }}</td>
+                              <td style="white-space: nowrap;">Rp {{ number_format($data->hpp, 0, ',', '.') }}</td>
+                              <td style="white-space: nowrap;">Rp {{ number_format($data->harga, 0, ',', '.') }}</td>
+                              <td style="white-space: nowrap;"><img src="{{ url('uploads/produk/'. $data->gambar_produk) }}" width="100px"></td>
+                              <td style="white-space: nowrap;">
                                   <a href="/admin/produk/edit/{{ $data->id_produk }}" class="btn btn-sm btn-warning">Edit</a>
                                   <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#delete{{ $data->id_produk }}">
                                     Delete
