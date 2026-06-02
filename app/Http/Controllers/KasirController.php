@@ -716,8 +716,8 @@ public function laporan(Request $request)
             ]);
         }
 
-        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        Config::$serverKey = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production');
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
