@@ -269,6 +269,8 @@ Route::middleware(['auth', 'gudang.only'])->prefix('gudang')->group(function () 
     Route::delete('/riwayat/hapus/{id}', [GudangController::class, 'hapusTransaksi'])->name('riwayat.hapus');
     Route::delete('/riwayatmasuk/hapus/{id}', [GudangController::class, 'hapusTransaksimasuk'])->name('riwayatmasuk.hapus');
     Route::get('/datasupplier', [GudangController::class, 'dataSupplier'])->name('gudang.datasupplier');
+    Route::put('/gudang/supplier/{id}', [GudangController::class, 'updateSupplier'])->name('supplier.update');
+    Route::delete('/gudang/supplier/{id}', [GudangController::class, 'deleteSuppliers'])->name('suppliers.delete');
     Route::get('/bahan/edit/{id_bahan}/{id_supplier}', [GudangController::class, 'editbahan'])->name('edit.bahan');
     Route::post('/bahan/update/{id_bahan}/{id_supplier}', [GudangController::class, 'updatebahan'])->name('update.bahan');
     Route::get('/editakun/{id}', [GudangController::class, 'editakun'])->name('editakungudang');

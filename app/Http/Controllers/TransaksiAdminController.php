@@ -118,6 +118,7 @@ public function exportExcel(Request $request)
 {
     $bulan = $request->bulan;
     $tahun = $request->tahun;
+    $filter = $request->filter;
 
     $query = DB::table('tb_transaksiadmin');
 
@@ -129,21 +130,28 @@ public function exportExcel(Request $request)
         $query->whereYear('created_at', $tahun);
     }
 
+    if ($filter) {
+        $query->where('jenis', $filter);
+    }
+
     $data = $query->orderBy('created_at', 'desc')->get();
 
-    // Format tanggal sekarang untuk nama file
     $tanggalSekarang = Carbon::now()->format('Y-m-d');
     $namaFile = "TransaksiAdmin_{$tanggalSekarang}.xlsx";
 
-    return Excel::download(new TransaksiAdminExport($data, $bulan, $tahun), $namaFile);
+    return Excel::download(
+        new TransaksiAdminExport($data, $bulan, $tahun, $filter),
+        $namaFile
+    );
 }
 
 public function exportPdf(Request $request)
 {
     $bulan = $request->bulan;
     $tahun = $request->tahun;
+    $filter = $request->filter;
 
-    $data = DB::table('tb_transaksiadmin')->get();
+    $query = DB::table('tb_transaksiadmin');
 
     if ($bulan) {
         $query->whereMonth('created_at', $bulan);
@@ -153,10 +161,17 @@ public function exportPdf(Request $request)
         $query->whereYear('created_at', $tahun);
     }
 
+    if ($filter) {
+        $query->where('jenis', $filter);
+    }
+
+    $data = $query->get();
 
     $tanggalSekarang = Carbon::now()->format('Y-m-d');
+
     $pdf = Pdf::loadView('exports.transaksiadmin_pdf', compact('data', 'bulan', 'tahun'))
-            ->setPaper('a4', 'landscape');
+        ->setPaper('a4', 'landscape');
+
     return $pdf->download("TransaksiAdmin_{$tanggalSekarang}.pdf");
 }
 

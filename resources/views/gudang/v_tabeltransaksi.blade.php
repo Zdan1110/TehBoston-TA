@@ -1,8 +1,6 @@
 @extends('layouts.gudang')
 
-@section('Title')
-Tabel Transaksi
-@endsection
+@section('title', 'Tabel Transaksi')
 
 @section('content')
 <div class="card mt-3 shadow-lg border-0 rounded-3 overflow-hidden">
@@ -13,10 +11,20 @@ Tabel Transaksi
       <a href="{{ route('transaksi.create') }}" class="btn btn-light text-green fw-bold">
         <i class="fas fa-plus-circle me-1"></i> Tambah Transaksi
       </a>
-      <a href="{{ route('transaksi.export.excel') }}" class="btn btn-success text-white fw-bold">
-        <i class="fas fa-file-excel me-1"></i> Export Excel
+      <a href="{{ route('transaksi.export.excel', [
+          'bulan' => request('bulan'),
+          'tahun' => request('tahun'),
+          'filter' => request('filter')
+      ]) }}" 
+      class="btn btn-success text-white fw-bold">
+          <i class="fas fa-file-excel me-1"></i> Export Excel
       </a>
-      <a href="{{ route('transaksi.export.pdf') }}" class="btn btn-danger text-white fw-bold">
+      <a href="{{ route('transaksi.export.pdf', [
+              'bulan' => request('bulan'),
+              'tahun' => request('tahun'),
+              'filter' => request('filter')
+          ]) }}" 
+        class="btn btn-danger text-white fw-bold">
         <i class="fas fa-file-pdf me-1"></i> Export PDF
       </a>
     </div>
@@ -26,7 +34,7 @@ Tabel Transaksi
     {{-- Filter Section --}}
     <div class="filter-card bg-light-green rounded-3 p-4 mb-4 shadow-sm border-start border-success border-3">
       <h5 class="mb-3 fw-bold text-dark">🔍 Filter Data</h5>
-      <form method="GET" action="{{ route('admin.transaksi.index') }}">
+      <form method="GET" action="{{ route('gudang.transaksi.index') }}">
         <div class="row g-3 align-items-end">
           {{-- Jenis Transaksi --}}
           <div class="col-md-3">
@@ -67,7 +75,7 @@ Tabel Transaksi
             <button type="submit" class="btn btn-green fw-bold shadow-sm">
               <i class="fas fa-filter me-1"></i> Terapkan Filter
             </button>
-            <a href="{{ route('admin.transaksi.index') }}" class="btn btn-outline-secondary fw-bold">
+            <a href="{{ route('gudang.transaksi.index') }}" class="btn btn-outline-secondary fw-bold">
               <i class="fas fa-undo me-1"></i> Reset
             </a>
           </div>

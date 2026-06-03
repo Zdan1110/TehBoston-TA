@@ -90,6 +90,9 @@
                         <a class="flip-link" id="switchToRegister">
                             Belum punya akun? <strong>Daftar di sini</strong>
                         </a>
+                        <a class="back-link" href="/">
+                            Kembali
+                        </a>
                     </div>
                 </div>
             </div>

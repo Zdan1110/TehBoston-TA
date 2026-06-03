@@ -1460,6 +1460,43 @@ public function hapusTransaksimasuk($id)
         return view('gudang.datasupplier', compact('suppliers', 'bahanbaku'));
     }
 
+    public function updateSupplier(Request $request, $id)
+    {
+        $request->validate([
+            'nama_supplier' => 'required',
+            'no_telp' => 'required',
+            'alamat' => 'required',
+        ]);
+
+        DB::table('tb_supplier')
+            ->where('id_supplier', $id)
+            ->update([
+                'nama_supplier' => $request->nama_supplier,
+                'no_telp' => $request->no_telp,
+                'alamat' => $request->alamat,
+            ]);
+
+        return redirect()->back()->with('success', 'Data supplier berhasil diperbarui.');
+    }
+
+    public function deleteSuppliers($id)
+    {
+        $supplier = DB::table('tb_supplier')
+            ->where('id_supplier', $id)
+            ->first();
+
+        if (!$supplier) {
+            return redirect()->back()
+                ->with('error', 'Supplier tidak ditemukan.');
+        }
+
+        DB::table('tb_supplier')
+            ->where('id_supplier', $id)
+            ->delete();
+
+        return redirect()->back()->with('success', 'Supplier berhasil dihapus.');
+    }
+
     public function editakun($id)
     {
         $akun = DB::table('tb_akun')->where('id_akun', $id)->first();
@@ -1571,7 +1608,6 @@ public function hapusTransaksimasuk($id)
     }
 
     public function deleteSupplier($id)
-
     {
         try {
             // Hapus bahan baku yang terkait dengan supplier
@@ -1989,58 +2025,81 @@ $chartData = collect(range(1, 12))->map(function ($bln) use ($pengeluaranChart, 
 
 public function exportPenjualanPDF(Request $request)
 {
-    $tahun = $request->get('tahun', date('Y'));
-    $bulan = $request->get('bulan');
+    $bulan = $request->input('bulan');
+    $tahun = $request->input('tahun', date('Y'));
+    $direction = $request->input('direction', 'desc');
 
-    $data = DB::table('tb_pengeluaran')
+    $query = DB::table('tb_pengeluaran')
         ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
         ->join('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
-        ->select(
-            'tb_pengeluaran.id_transaksi',
+        ->whereYear('tb_pengeluaran.created_at', $tahun);
+
+    if (!empty($bulan)) {
+        $query->whereMonth('tb_pengeluaran.created_at', $bulan);
+    }
+
+    $transaksiDetail = $query->select(
+            'tb_bahanbaku.id_bahanbaku',
             'tb_bahanbaku.nama_bahan',
-            'tb_pengeluaran.jumlah',
-            DB::raw('(tb_bahanbaku.harga_modal * tb_pengeluaran.jumlah) as harga_modal_total'),
-            DB::raw('(tb_bahanbaku.harga_jual * tb_pengeluaran.jumlah) as harga_jual_total'),
-            DB::raw('((tb_bahanbaku.harga_jual - tb_bahanbaku.harga_modal) * tb_pengeluaran.jumlah) as laba'),
-            'tb_pengeluaran.created_at'
+            DB::raw('SUM(tb_detailpengeluaran.jumlah) as jumlah'),
+            DB::raw('SUM(tb_bahanbaku.harga_modal * tb_detailpengeluaran.jumlah) as harga_modal_total'),
+            DB::raw('SUM(tb_bahanbaku.harga_jual * tb_detailpengeluaran.jumlah) as harga_jual_total'),
+            DB::raw('SUM((tb_bahanbaku.harga_jual - tb_bahanbaku.harga_modal) * tb_detailpengeluaran.jumlah) as laba'),
+            DB::raw('MAX(tb_pengeluaran.created_at) as created_at')
         )
-        ->whereYear('tb_pengeluaran.created_at', $tahun)
-        ->when($bulan, fn($q) => $q->whereMonth('tb_pengeluaran.created_at', $bulan))
-        ->orderBy('tb_pengeluaran.created_at', 'desc')
+        ->groupBy(
+            'tb_bahanbaku.id_bahanbaku',
+            'tb_bahanbaku.nama_bahan'
+        )
+        ->orderBy('created_at', $direction)
         ->get();
 
-    $pdf = Pdf::loadView('exports.penjualan_pdf', compact('data', 'bulan', 'tahun'))
-              ->setPaper('a4', 'landscape');
+        $pdf = Pdf::loadView('exports.penjualan_pdf', [
+            'data' => $transaksiDetail,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+        ])->setPaper('a4', 'landscape');
 
-    return $pdf->download("Laporan_Penjualan_{$bulan}_{$tahun}.pdf");
+    return $pdf->download('Laporan_Penjualan_' .($bulan ?: 'SemuaBulan') .'_' .$tahun .'.pdf');
 }
 
 
 public function exportPenjualanExcel(Request $request)
 {
-    $tahun = $request->get('tahun', date('Y'));
-    $bulan = $request->get('bulan');
+    $bulan = $request->input('bulan');
+    $tahun = $request->input('tahun', date('Y'));
+    $direction = $request->input('direction', 'desc');
 
-    $data = DB::table('tb_pengeluaran')
+    $query = DB::table('tb_pengeluaran')
         ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
         ->join('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
-        ->select(
-            'tb_pengeluaran.id_transaksi',
+        ->whereYear('tb_pengeluaran.created_at', $tahun);
+
+    if (!empty($bulan)) {
+        $query->whereMonth('tb_pengeluaran.created_at', $bulan);
+    }
+
+    $data = $query->select(
+            'tb_bahanbaku.id_bahanbaku',
             'tb_bahanbaku.nama_bahan',
-            'tb_pengeluaran.jumlah',
-            'tb_bahanbaku.harga_modal',
-            'tb_bahanbaku.harga_jual',
-            DB::raw('(tb_bahanbaku.harga_jual - tb_bahanbaku.harga_modal) * tb_pengeluaran.jumlah as laba'),
-            'tb_pengeluaran.created_at'
+            DB::raw('SUM(tb_detailpengeluaran.jumlah) as jumlah'),
+            DB::raw('SUM(tb_bahanbaku.harga_modal * tb_detailpengeluaran.jumlah) as harga_modal_total'),
+            DB::raw('SUM(tb_bahanbaku.harga_jual * tb_detailpengeluaran.jumlah) as harga_jual_total'),
+            DB::raw('SUM((tb_bahanbaku.harga_jual - tb_bahanbaku.harga_modal) * tb_detailpengeluaran.jumlah) as laba'),
+            DB::raw('MAX(tb_pengeluaran.created_at) as created_at')
         )
-        ->whereYear('tb_pengeluaran.created_at', $tahun)
-        ->when($bulan, fn($q) => $q->whereMonth('tb_pengeluaran.created_at', $bulan))
-        ->orderBy('tb_pengeluaran.created_at', 'asc')
+        ->groupBy(
+            'tb_bahanbaku.id_bahanbaku',
+            'tb_bahanbaku.nama_bahan'
+        )
+        ->orderBy('created_at', $direction)
         ->get();
 
-    return \Excel::download(new \App\Exports\PenjualanExport($data), "Laporan_Penjualan_{$bulan}_{$tahun}.xlsx");
+    return \Excel::download(
+        new \App\Exports\PenjualanExport($data),
+        'Laporan_Penjualan_' . ($bulan ?: 'SemuaBulan') . '_' . $tahun . '.xlsx'
+    );
 }
-
 
 public function exportPengeluaranPDF(Request $request)
 {
@@ -2102,9 +2161,11 @@ public function tabelPenjualan(Request $request)
     $tahun = $request->input('tahun', date('Y'));
     $direction = $request->input('direction', 'desc');
 
+
     $query = DB::table('tb_pengeluaran')
         ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
         ->join('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+        ->whereMonth('tb_pengeluaran.created_at', $bulan ?? Carbon::now()->month)
         ->whereYear('tb_pengeluaran.created_at', $tahun);
 
     if (!empty($bulan)) {
@@ -2112,16 +2173,20 @@ public function tabelPenjualan(Request $request)
     }
 
     $transaksiDetail = $query->select(
-        'tb_pengeluaran.id_transaksi',
-        'tb_bahanbaku.nama_bahan',
-        'tb_pengeluaran.jumlah',
-        DB::raw('(tb_bahanbaku.harga_modal * tb_pengeluaran.jumlah) as harga_modal_total'),
-        DB::raw('(tb_bahanbaku.harga_jual * tb_pengeluaran.jumlah) as harga_jual_total'),
-        DB::raw('((tb_bahanbaku.harga_jual - tb_bahanbaku.harga_modal) * tb_pengeluaran.jumlah) as laba'),
-        'tb_pengeluaran.created_at'
-    )
-    ->orderBy('tb_pengeluaran.created_at', $direction)
-    ->get();
+            'tb_bahanbaku.id_bahanbaku',
+            'tb_bahanbaku.nama_bahan',
+            DB::raw('SUM(tb_detailpengeluaran.jumlah) as jumlah'),
+            DB::raw('SUM(tb_bahanbaku.harga_modal * tb_detailpengeluaran.jumlah) as harga_modal_total'),
+            DB::raw('SUM(tb_bahanbaku.harga_jual * tb_detailpengeluaran.jumlah) as harga_jual_total'),
+            DB::raw('SUM((tb_bahanbaku.harga_jual - tb_bahanbaku.harga_modal) * tb_detailpengeluaran.jumlah) as laba'),
+            DB::raw('MAX(tb_pengeluaran.created_at) as created_at')
+        )
+        ->groupBy(
+            'tb_bahanbaku.id_bahanbaku',
+            'tb_bahanbaku.nama_bahan'
+        )
+        ->orderBy('created_at', $direction)
+        ->get();
 
     return view('gudang.tabelpenjualan', [
         'transaksiDetail' => $transaksiDetail,
@@ -2265,36 +2330,48 @@ public function tabelPaket(Request $request)
             'jumlah' => 'required|array|min:1',
             'jumlah.*' => 'required|numeric|min:1',
             'harga' => 'required',
-            'gambar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'gambar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         DB::beginTransaction();
 
         try {
+
             $harga = preg_replace('/[^0-9]/', '', $request->harga);
 
             $paketLama = DB::table('tb_paket')
                 ->where('id_paket', $request->id_paket)
                 ->first();
 
+            // gunakan gambar lama jika tidak upload baru
             $namaGambar = $paketLama->gambar_paket;
 
             if ($request->hasFile('gambar')) {
-                if ($paketLama->gambar_paket && file_exists(public_path('uploads/paket/' . $paketLama->gambar_paket))) {
+
+                // hapus gambar lama
+                if (
+                    $paketLama->gambar_paket &&
+                    file_exists(public_path('uploads/paket/' . $paketLama->gambar_paket))
+                ) {
                     unlink(public_path('uploads/paket/' . $paketLama->gambar_paket));
                 }
 
                 $file = $request->file('gambar');
+
                 $namaGambar = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/paket'), $namaGambar);
+
+                $file->move(
+                    public_path('uploads/paket'),
+                    $namaGambar
+                );
             }
 
             DB::table('tb_paket')
                 ->where('id_paket', $request->id_paket)
                 ->update([
-                    'nama_paket' => $request->nama_paket,
-                    'gambar_paket' =>$namaGambar,
-                    'harga' => $harga,
+                    'nama_paket'   => $request->nama_paket,
+                    'harga'        => $harga,
+                    'gambar_paket' => $namaGambar,
                 ]);
 
             DB::table('tb_detailpaket')
@@ -2310,6 +2387,7 @@ public function tabelPaket(Request $request)
                 : 0;
 
             foreach ($request->id_bahanbaku as $i => $idBahan) {
+
                 $newNumberDetail++;
 
                 $idDetail = 'DP' . str_pad($newNumberDetail, 3, '0', STR_PAD_LEFT);
@@ -2324,8 +2402,10 @@ public function tabelPaket(Request $request)
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Paket berhasil diupdate.');
+            return redirect()->back()
+                ->with('success', 'Paket berhasil diupdate.');
         } catch (\Exception $e) {
+
             DB::rollBack();
 
             Log::error('Error update paket', [
@@ -2333,7 +2413,8 @@ public function tabelPaket(Request $request)
                 'request' => $request->all(),
             ]);
 
-            return redirect()->back()->with('error', 'Paket gagal diupdate.');
+            return redirect()->back()
+                ->with('error', 'Paket gagal diupdate.');
         }
     }
 

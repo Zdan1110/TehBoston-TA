@@ -23,7 +23,6 @@
         <thead>
             <tr>
                 <th>No</th>
-                <th>Tanggal</th>
                 <th>Nama Produk</th>
                 <th>Jumlah</th>
                 <th>Harga Modal</th>
@@ -49,7 +48,6 @@
                 @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ \Carbon\Carbon::parse($row->created_at)->format('d/m/Y') }}</td>
                     <td>{{ $row->nama_bahan }}</td>
                     <td>{{ number_format($row->jumlah, 0, ',', '.') }}</td>
                     <td>Rp {{ number_format($modal, 0, ',', '.') }}</td>
@@ -60,7 +58,7 @@
         </tbody>
         <tfoot>
             <tr style="font-weight:bold; background-color:#f1f8e9;">
-                <td colspan="4">TOTAL</td>
+                <td colspan="3">TOTAL</td>
                 <td>Rp {{ number_format($totalModal, 0, ',', '.') }}</td>
                 <td>Rp {{ number_format($totalJual, 0, ',', '.') }}</td>
                 <td>Rp {{ number_format($totalLaba, 0, ',', '.') }}</td>

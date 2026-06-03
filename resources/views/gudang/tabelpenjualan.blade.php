@@ -26,16 +26,6 @@
             </select>
         </div>
 
-        <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" name="direction" value="{{ $direction === 'desc' ? 'asc' : 'desc' }}" class="btn btn-outline-secondary w-100">
-                @if ($direction === 'desc')
-                    <i class="bi bi-sort-down"></i> Terbaru
-                @else
-                    <i class="bi bi-sort-up"></i> Terlama
-                @endif
-            </button>
-        </div>
-
         <div class="col-md-3 d-flex align-items-end">
             <a href="{{ route('gudang.penjualan.export.pdf', ['bulan' => $bulanSekarang, 'tahun' => $tahunSekarang]) }}" 
                class="btn btn-danger w-50 me-2"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
@@ -49,7 +39,6 @@
             <thead class="table-success">
                 <tr>
                     <th style="white-space: nowrap;">No</th>
-                    <th style="white-space: nowrap;">Tanggal</th>
                     <th style="white-space: nowrap;">Nama Bahan</th>
                     <th style="white-space: nowrap;">Jumlah</th>
                     <th style="white-space: nowrap;">Harga Modal</th>
@@ -71,7 +60,6 @@
                     @endphp
                     <tr>
                         <td style="white-space: nowrap;">{{ $index + 1 }}</td>
-                        <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($row->created_at)->translatedFormat('d M Y') }}</td>
                         <td style="white-space: nowrap;">{{ $row->nama_bahan }}</td>
                         <td style="white-space: nowrap;">{{ number_format($row->jumlah, 0, ',', '.') }}</td>
                         <td style="white-space: nowrap;">Rp {{ number_format($row->harga_modal_total, 0, ',', '.') }}</td>
@@ -86,7 +74,7 @@
             @if($transaksiDetail->count() > 0)
             <tfoot class="fw-bold bg-light">
                 <tr>
-                    <td colspan="4" class="text-end" style="white-space: nowrap;">TOTAL :</td>
+                    <td colspan="3" class="text-end" style="white-space: nowrap;">TOTAL :</td>
                     <td style="white-space: nowrap;">Rp {{ number_format($totalModal, 0, ',', '.') }}</td>
                     <td style="white-space: nowrap;">Rp {{ number_format($totalJual, 0, ',', '.') }}</td>
                     <td style="white-space: nowrap;">Rp {{ number_format($totalLaba, 0, ',', '.') }}</td>

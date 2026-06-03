@@ -26,12 +26,11 @@ class PenjualanExport implements FromCollection, WithHeadings, WithStyles
         $totalLaba = 0;
 
         foreach ($this->data as $item) {
-            $modal = $item->harga_modal * $item->jumlah;
-            $jual = $item->harga_jual * $item->jumlah;
-            $laba = $jual - $modal;
+            $modal = $item->harga_modal_total;
+            $jual = $item->harga_jual_total;
+            $laba = $item->laba;
 
             $rows->push([
-                'Tanggal' => Carbon::parse($item->created_at)->format('d-m-Y'),
                 'Nama Produk' => $item->nama_bahan,
                 'Jumlah' => $item->jumlah,
                 'Total Modal (Rp)' => $modal,
@@ -44,12 +43,10 @@ class PenjualanExport implements FromCollection, WithHeadings, WithStyles
             $totalLaba += $laba;
         }
 
-        // Tambahkan baris kosong & total di akhir
         $rows->push([]);
         $rows->push([
-            'Tanggal' => '',
             'Nama Produk' => '',
-            'Jumlah' => '',
+            'Jumlah' => 'TOTAL',
             'Total Modal (Rp)' => $totalModal,
             'Total Jual (Rp)' => $totalJual,
             'Laba (Rp)' => $totalLaba,
@@ -61,7 +58,6 @@ class PenjualanExport implements FromCollection, WithHeadings, WithStyles
     public function headings(): array
     {
         return [
-            'Tanggal',
             'Nama Produk',
             'Jumlah',
             'Total Modal (Rp)',
@@ -74,21 +70,12 @@ class PenjualanExport implements FromCollection, WithHeadings, WithStyles
     {
         $highestRow = $sheet->getHighestRow();
 
-        // Bold header
         $sheet->getStyle('A1:F1')->getFont()->setBold(true);
-
-        // Bold total baris terakhir
         $sheet->getStyle("A{$highestRow}:F{$highestRow}")->getFont()->setBold(true);
-
-        // Format angka (jumlah, modal, jual, laba)
         $sheet->getStyle("C2:F{$highestRow}")
             ->getNumberFormat()
             ->setFormatCode('#,##0');
-
-        // Rata tengah untuk kolom tanggal & jumlah
         $sheet->getStyle('A2:C' . $highestRow)->getAlignment()->setHorizontal('center');
-
-        // Auto width kolom
         foreach (range('A', 'F') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }

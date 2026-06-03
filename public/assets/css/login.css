@@ -260,6 +260,22 @@ body {
     transform: scale(1.02);
 }
 
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: var(--accent-red) !important;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+    transform: scale(1.02);
+}
+
 .error-message {
     color: var(--accent-red);
     font-size: 0.85rem;

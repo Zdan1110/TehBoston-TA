@@ -188,8 +188,8 @@
 
   <div class="sidebar" id="sidebar">
   <div class="logo-container d-flex align-items-center">
-    <img src="{{ asset('gambar/logo.png') }}" alt="Logo" height="40">
-    <span class="logo-text">Distribution Centre</span>
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8W7oiRio5Eh4_ppE0Pour4OVey07Wh2W8Ag&s" alt="Logo" style="height: 4rem; width: 4rem; border-radius: 9999px; object-fit: cover; margin-bottom: 0.5rem;">
+    <span class="logo-text">Gudang Pusat</span>
   </div>
   <ul class="nav flex-column mt-3">
 
@@ -264,11 +264,11 @@
     </li>
     @endif
 
-    <li class="nav-item">
+    <!-- <li class="nav-item">
       <a href="/home" class="nav-link">
         <i class="bi bi-box-arrow-left"></i> Ke Halaman Home
       </a>
-    </li>
+    </li> -->
 
     <li class="nav-item mt-3">
       <a href="/logout" class="nav-link text-danger">

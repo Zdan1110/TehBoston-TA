@@ -37,10 +37,33 @@
                 role="tabpanel"
                 aria-labelledby="tab-{{ $supplier->id_supplier }}">
                 <h6 class="mb-3 text-primary">Daftar Bahan Baku dari {{ $supplier->nama_supplier }}</h6>
-                <div class="mb-3">
-                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#tambahBahanModal-{{ $supplier->id_supplier }}">
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <button class="btn btn-warning btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#tambahBahanModal-{{ $supplier->id_supplier }}">
                         + Tambah Bahan Baku
                     </button>
+
+                    <div class="d-flex gap-2">
+                        <button type="button"
+                            class="btn btn-warning btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#detailSupplierModal-{{ $supplier->id_supplier }}">
+                            <i class="bi bi-person-vcard me-1"></i>
+                            Detail Supplier
+                        </button>
+
+                        <form action="{{ route('supplier.delete', $supplier->id_supplier) }}"
+                            method="POST"
+                            onsubmit="return confirm('Yakin ingin menghapus supplier ini? Semua bahan baku dari supplier ini juga bisa terdampak.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-warning btn-sm">
+                                <i class="bi bi-trash-fill me-1"></i>
+                                Hapus Supplier
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
@@ -138,6 +161,89 @@
                 </div>
             </div>
 
+            <div class="modal fade"
+                id="detailSupplierModal-{{ $supplier->id_supplier }}"
+                tabindex="-1"
+                aria-labelledby="detailSupplierLabel{{ $supplier->id_supplier }}"
+                aria-hidden="true">
+
+                <div class="modal-dialog">
+                    <form action="{{ route('supplier.update', $supplier->id_supplier) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning">
+                                <h5 class="modal-title" id="detailSupplierLabel{{ $supplier->id_supplier }}">
+                                    Detail Supplier
+                                </h5>
+
+                                <div class="d-flex gap-2">
+                                    <button type="button"
+                                        class="btn btn-danger"
+                                        data-bs-dismiss="modal">
+                                        <i class="bi bi-x fs-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <button type="button"
+                                        id="btnEditSupplier-{{ $supplier->id_supplier }}"
+                                        class="btn btn-success btn-sm"
+                                        onclick="enableEditSupplier('{{ $supplier->id_supplier }}')">
+                                        <i class="bi bi-pencil-square me-1"></i>
+                                        Edit Data
+                                    </button>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Nama Supplier</label>
+                                    <input type="text"
+                                        name="nama_supplier"
+                                        class="form-control edit-supplier-{{ $supplier->id_supplier }}"
+                                        value="{{ $supplier->nama_supplier }}"
+                                        readonly
+                                        required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">No. Telepon</label>
+                                    <input type="text"
+                                        name="no_telp"
+                                        class="form-control edit-supplier-{{ $supplier->id_supplier }}"
+                                        value="{{ $supplier->no_telp }}"
+                                        readonly>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Alamat</label>
+                                    <textarea name="alamat"
+                                        class="form-control edit-supplier-{{ $supplier->id_supplier }}"
+                                        rows="3"
+                                        readonly>{{ $supplier->alamat }}</textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Jumlah Bahan</label>
+                                    <input type="text"
+                                        class="form-control"
+                                        value="{{ $bahanbaku->where('id_supplier', $supplier->id_supplier)->count() }}"
+                                        readonly>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer d-none" id="footerUpdateSupplier-{{ $supplier->id_supplier }}">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Update
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
             @endforeach
         </div>
     </div>
@@ -175,4 +281,31 @@
         </form>
     </div>
 </div>
+
+<script>
+    window.enableEditSupplier = function(id) {
+        const inputs = document.querySelectorAll('.edit-supplier-' + id);
+        const footer = document.getElementById('footerUpdateSupplier-' + id);
+        const btnEdit = document.getElementById('btnEditSupplier-' + id);
+
+        inputs.forEach(function(input) {
+            input.readOnly = false;
+            input.classList.remove('bg-light');
+            input.classList.add('border-warning');
+        });
+
+        if (footer) {
+            footer.classList.remove('d-none');
+        }
+
+        if (btnEdit) {
+            btnEdit.disabled = true;
+            btnEdit.innerHTML = '<i class="bi bi-pencil-square me-1"></i> Editing';
+        }
+
+        if (inputs.length > 0) {
+            inputs[0].focus();
+        }
+    }
+</script>
 @endsection
