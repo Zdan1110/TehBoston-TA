@@ -116,12 +116,6 @@
                                 <p class="text-xs text-gray-500">ID: {{ $item->id_bahanbaku }}</p>
                             </div>
                         </div>
-                        <div class="flex space-x-1">
-                            <a href="/editstok/{{ $item->id_stokfranchise }}" 
-                                class="text-blue-600 hover:text-blue-900 p-2 hover:bg-gray-100 rounded-full">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                        </div>
                     </div>
                     
                     <div class="space-y-2 text-sm">
@@ -165,60 +159,7 @@
     </div>
 </div>
 
-<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Konfirmasi Hapus</h3>
-        <p class="text-gray-500 mb-6">Apakah Anda yakin ingin menghapus bahan baku ini?</p>
-        <div class="flex justify-end space-x-3">
-            <button id="cancelDelete" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                Batal
-            </button>
-            <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                Hapus
-            </button>
-        </div>
-    </div>
-</div>
 
-<div id="addModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900">Tambah Stok Bahan Baku</h3>
-            <button id="closeAddModal" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <form id="addForm" action="/tambahstok" method="POST">
-            @csrf
-            <div class="mb-4">
-                <label for="nama_bahan" class="block text-sm font-medium text-gray-700 mb-1">Nama Bahan</label>
-                <select id="nama_bahan" name="id_bahanbaku" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" 
-                    required>
-                    <option value="">-- Pilih Bahan --</option>
-                    @foreach($bahanbaku as $bahan)
-                        <option value="{{ $bahan->id_bahanbaku }}">{{ $bahan->nama_bahan }}</option>
-                    @endforeach
-                </select>
-            </div>
-            
-            <div class="mb-4">
-                <label for="stok" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Stok</label>
-                <input type="number" id="stok" name="stok" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
-            </div>
-            
-            <div class="flex justify-end space-x-3">
-                <button type="button" id="cancelAdd" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                    Batal
-                </button>
-                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                    Simpan
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

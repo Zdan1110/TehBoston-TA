@@ -125,6 +125,7 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
             ->leftJoin('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->where('tb_transaksi.jenis_transaksi', 'pengeluaran')
             ->where('tb_transaksi.status_transaksi', '!=', 'Selesai')
+            ->where('tb_transaksi.status_transaksi', '!=', 'Dibatalkan')
             ->select(
                 'tb_transaksi.id_transaksi',
                 'tb_transaksi.tanggal_transaksi',
@@ -208,13 +209,53 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
 
     public function kirimPesanan($id)
     {
-        DB::table('tb_transaksi')
-            ->where('id_transaksi', $id)
-            ->update([
-                'status_transaksi' => 'Dikirim'
-            ]);
+        DB::beginTransaction();
 
-    return redirect()->route('gudang.printnota', $id);
+        try {
+            $bahanKurang = DB::table('tb_pengeluaran as p')
+                ->join('tb_detailpaket as dp', 'p.id_paket', '=', 'dp.id_paket')
+                ->join('tb_bahanbaku as b', 'dp.id_bahanbaku', '=', 'b.id_bahanbaku')
+                ->where('p.id_transaksi', $id)
+                ->select(
+                    'b.id_bahanbaku',
+                    'b.nama_bahan',
+                    'b.stok',
+                    DB::raw('SUM(dp.jumlah) as total_dibutuhkan')
+                )
+                ->groupBy('b.id_bahanbaku', 'b.nama_bahan', 'b.stok')
+                ->havingRaw('total_dibutuhkan > b.stok')
+                ->get();
+
+            if ($bahanKurang->count() > 0) {
+                DB::rollBack();
+
+                $pesan = $bahanKurang->map(function ($item) {
+                    return $item->nama_bahan . ' stok kurang! ( Dibutuhkan: ' .
+                        $item->total_dibutuhkan . ', stok tersedia: ' . $item->stok . ' )';
+                })->implode('<br>');
+
+                return redirect()
+                    ->back()
+                    ->with('error', $pesan);
+            }
+
+            DB::table('tb_transaksi')
+                ->where('id_transaksi', $id)
+                ->update([
+                    'status_transaksi' => 'Dikirim'
+                ]);
+
+            DB::commit();
+
+            return redirect()->route('gudang.printnota', $id);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengirim pesanan: ' . $e->getMessage());
+        }
     }
 
     public function selesaiPesanan($id)

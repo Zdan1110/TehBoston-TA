@@ -12,7 +12,7 @@
 
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show d-flex justify-content-between align-items-center" role="alert">
-            <span>{{ session('error') }}</span>
+            <span>{!! session('error') !!}</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif

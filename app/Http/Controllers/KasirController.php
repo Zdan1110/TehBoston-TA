@@ -227,7 +227,6 @@ public function laporan(Request $request)
         $penjualan = $model->DataLaporanFilterBulanTahun($id_franchise, $bulan, $tahun);
     }
 
-    // Kirim nama_franchise ke view
     return view('kasir.v_pelaporan', compact('penjualan', 'bulan', 'tahun', 'type_akun', 'nama_franchise'));
 }
 
@@ -709,7 +708,24 @@ public function laporan(Request $request)
             ], 404);
         }
 
+        $expiredAt = Carbon::parse($transaksi->tanggal_transaksi)->addDay();
+
         if (!empty($transaksi->snap_token)) {
+            if (Carbon::now()->greaterThan($expiredAt)) {
+                DB::table('tb_transaksi')
+                    ->where('id_transaksi', $id)
+                    ->update([
+                        'status_pembayaran' => 'expire',
+                        'status_transaksi' => 'Dibatalkan',
+                        'snap_token' => null,
+                    ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token pembayaran sudah kadaluarsa. Transaksi dibatalkan.'
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'snap_token' => $transaksi->snap_token
@@ -760,7 +776,6 @@ public function laporan(Request $request)
 
     public function stokFranchise()
     {
-        // 1. Ambil data user dari session manual (bukan dari auth())
         $user = Session::get('user');
 
         if (!$user || !isset($user['id_akun'])) {
@@ -770,20 +785,17 @@ public function laporan(Request $request)
 
         if ($type_akun == 'kasir')
         {
-            // 2. Ambil data kasir dari tb_kasir berdasarkan id_akun
             $kasir = DB::table('tb_kasir')->where('id_akun', $user['id_akun'])->first();
             if (!$kasir) {
                 return abort(403, 'Data kasir tidak ditemukan.');
             }
         
 
-            // 3. Ambil franchise dari id_franchise kasir
             $franchise = DB::table('tb_franchise')->where('id_franchise', $kasir->id_franchise)->first();
             if (!$franchise) {
                 return abort(403, 'Franchise tidak ditemukan.');
             }
             
-            // 4. Ambil stok bahan baku dari franchise
             $stok = DB::table('tb_stokfranchise')
             ->join('tb_bahanbaku', 'tb_stokfranchise.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->where('tb_stokfranchise.id_franchise', $kasir->id_franchise)
@@ -800,13 +812,11 @@ public function laporan(Request $request)
         {
             $id_franchise = Session::get('user')['id_franchise'];      
 
-            // 3. Ambil franchise dari id_franchise kasir
             $franchise = DB::table('tb_franchise')->where('id_franchise', $id_franchise)->first();
             if (!$franchise) {
                 return abort(403, 'Franchise tidak ditemukan.');
             }
             
-            // 4. Ambil stok bahan baku dari franchise
             $stok = DB::table('tb_stokfranchise')
             ->join('tb_bahanbaku', 'tb_stokfranchise.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->where('tb_stokfranchise.id_franchise', $id_franchise)

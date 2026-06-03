@@ -130,7 +130,7 @@
 
 
     <!-- Quick Actions - Perbaikan di sini -->
-    <div class="col-lg-4 mb-4">
+    <div class="col-lg-4 mb-4 mt-4">
     <div class="card h-100">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Aktivitas Gudang</h6>

@@ -86,6 +86,11 @@
                                     Lunas
                                 </span>
 
+                            @elseif($row['status_pembayaran'] == 'expire')
+                                <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-semibold">
+                                    Kadaluarsa
+                                </span>
+
                             @elseif($row['status_pembayaran'] == 'pending')
                                 <div class="flex flex-col items-center gap-2">
                                     <span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-semibold">
@@ -121,6 +126,10 @@
                             @elseif($row['status_transaksi'] == 'Selesai')
                                 <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold">
                                     Selesai
+                                </span>
+                            @elseif($row['status_transaksi'] == 'Dibatalkan')
+                                <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-semibold">
+                                    Dibatalkan
                                 </span>
                             @else
                                 <span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
@@ -181,6 +190,7 @@
                 });
             } else {
                 alert(data.message || 'Gagal membuat pembayaran.');
+                window.location.reload();
             }
         })
         .catch(error => {

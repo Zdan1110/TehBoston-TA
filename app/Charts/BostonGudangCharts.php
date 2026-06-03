@@ -28,18 +28,17 @@ class BostonGudangCharts
             ->whereMonth('tanggal_transaksi', $angkaBulan)
             ->where('tb_bahanbaku.jenis_bahan', $data)
             ->where('tb_transaksi.jenis_transaksi', '=', 'Pemasukan')
-            ->distinct() // pastikan hanya 1 per transaksi
-            ->sum('tb_transaksi.total');
+            ->sum('tb_pemasukan.jumlah');
 
         $jumlahPengeluaran = DB::table('tb_transaksi')
             ->join('tb_pengeluaran', 'tb_transaksi.id_transaksi', '=', 'tb_pengeluaran.id_transaksi')
-            ->join('tb_paket', 'tb_pengeluaran.id_paket', '=', 'tb_paket.id_paket')
+            ->join('tb_detailpengeluaran', 'tb_pengeluaran.id_pengeluaran', '=', 'tb_detailpengeluaran.id_pengeluaran')
+            ->join('tb_bahanbaku', 'tb_detailpengeluaran.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->whereYear('tanggal_transaksi', $tahun)
             ->whereMonth('tanggal_transaksi', $angkaBulan)
-            ->where('tb_paket.nama_paket', $data)
+            ->where('tb_bahanbaku.jenis_bahan', $data)
             ->where('tb_transaksi.jenis_transaksi', '=', 'Pengeluaran')
-            ->distinct() // pastikan hanya 1 per transaksi
-            ->sum('tb_transaksi.total');
+            ->sum('tb_detailpengeluaran.jumlah');
 
             $tanggalfix = Carbon::parse($bulan)->format('d/m/Y');
             $total = $jumlahPemasukan + $jumlahPengeluaran;
