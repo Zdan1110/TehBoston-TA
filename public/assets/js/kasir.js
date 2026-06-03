@@ -108,7 +108,7 @@ function checkoutOrder() {
   .then(response => response.json())
   .then(response => {
     if (response.success) {
-      alert("Pesanan berhasil disimpan!");
+      showNotification("Pesanan berhasil disimpan!", "success");
       // Reset form
       document.getElementById("order-list").innerHTML = "";
       document.getElementById("total").textContent = "Total: Rp0";
@@ -117,7 +117,7 @@ function checkoutOrder() {
       total = 0;
       window.location.href = response.redirect;
     } else {
-      alert("Gagal menyimpan pesanan.");
+      showNotification(response.message || "Gagal menyimpan pesanan.", "error");
     }
   })
   .catch(error => {
@@ -356,3 +356,31 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 window.checkoutOrder = checkoutOrder;
+
+function showNotification(message, type = "success") {
+    const alertBox = document.getElementById("custom-alert");
+    const messageBox = document.getElementById("alert-message");
+    const overlay = document.getElementById("alert-overlay");
+
+    if (!alertBox || !messageBox) {
+        alert(message);
+        return;
+    }
+
+    messageBox.innerHTML = message;
+
+    alertBox.classList.remove("hidden", "success", "error");
+    alertBox.classList.add(type);
+
+    if (overlay) {
+        overlay.classList.remove("hidden");
+    }
+
+    setTimeout(() => {
+        alertBox.classList.add("hidden");
+
+        if (overlay) {
+            overlay.classList.add("hidden");
+        }
+    }, 3000);
+}

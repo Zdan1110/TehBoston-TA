@@ -19,12 +19,12 @@ class KasirController extends Controller
 
     public function __construct()
     {
-        $this->kasir = new M_Kasir(); // Inisialisasi model kasir
+        $this->kasir = new M_Kasir(); 
     }
 
     public function index(Request $request, BostonKasirChart $chart)
     {
-        $bulanAwal = $request->input('bulan_awal'); // format: 2025-04
+        $bulanAwal = $request->input('bulan_awal'); 
         $bulanAkhir = $request->input('bulan_akhir');
         $user = Session::get('user');
         if (!$user || !isset($user['id_akun'])) {
@@ -34,14 +34,13 @@ class KasirController extends Controller
         $type_akun = Session::get('user')['type_akun'];
         if ($type_akun == 'kasir')
         {
-        // Get id_franchise for the logged-in kasir
+
         $idFranchise = DB::table('tb_kasir')
             ->join('tb_franchise', 'tb_kasir.id_franchise', '=', 'tb_franchise.id_franchise')
             ->where('tb_kasir.id_akun', $id_akun)
             ->select('tb_franchise.id_franchise')
             ->first();
 
-        // Check if idFranchise exists before proceeding
         if (!$idFranchise) {
             Log::warning("Kasir with id_akun: {$id_akun} not linked to any franchise.");
             return redirect('/')->with('error', 'Akun kasir tidak terhubung dengan franchise.');
@@ -85,7 +84,6 @@ class KasirController extends Controller
             ->orderBy('tahun', 'desc')
             ->pluck('tahun');
 
-        // --- START: MODIFIED CODE TO INCLUDE PELANGGAN ---
         $penjualan = DB::table('tb_detailpenjualan as dp')
             ->join('tb_penjualan as p', 'dp.id_penjualan', '=', 'p.id_penjualan')
             ->select(
@@ -100,19 +98,14 @@ class KasirController extends Controller
             ->limit(5)
             ->get();
         
-            // Produk terjual terbanyak
             $produkTerjual = DB::table('tb_detailpenjualan as dp')
             ->join('tb_penjualan as p', 'dp.id_penjualan', '=', 'p.id_penjualan')
             ->select('dp.nama_produk', DB::raw('SUM(dp.jumlah) as total_terjual'))
             ->where('p.id_franchise', $currentFranchiseId)
             ->groupBy('dp.nama_produk')
             ->orderByDesc('total_terjual')
-            ->limit(8) // tampilkan 8 produk terbanyak
+            ->limit(8) 
             ->get();
-
-        
-
-
 
         return view('kasir.v_dashkasir', compact('chart', 'tahunList', 'bulanAkhir', 'bulanAwal', 'pendapatanperhari', 'pendapatanbulanini', 'jumlahpelangganperhari', 'penjualan','produkTerjual'));
     }
@@ -234,107 +227,147 @@ public function laporan(Request $request)
     {
         try {
             DB::beginTransaction();
-            $type_akun = Session::get('user')['type_akun'];
 
-            if ($type_akun == 'kasir')
-            {
-                $lastPenjualan = DB::table('tb_penjualan')
-                    ->select('id_penjualan')
-                    ->orderByDesc('id_penjualan')
+            $user = Session::get('user');
+            $type_akun = $user['type_akun'];
+
+            if ($type_akun == 'kasir') {
+                $id_akun = $user['id_akun'];
+
+                $franchise = DB::table('tb_kasir')
+                    ->where('id_akun', $id_akun)
                     ->first();
 
-                $idPenjualan = $lastPenjualan
-                    ? 'T' . str_pad((int) substr($lastPenjualan->id_penjualan, 1) + 1, 4, '0', STR_PAD_LEFT)
-                    : 'T0001';
+                $idFranchise = $franchise->id_franchise;
+            } else {
+                $idFranchise = $user['id_franchise'];
+            }
 
-                $id_akun = Session::get('user')['id_akun'];
-                $idFranchise = DB::table('tb_kasir')
-                    ->join('tb_franchise', 'tb_kasir.id_franchise', '=', 'tb_franchise.id_franchise')
-                    ->where('tb_kasir.id_akun', $id_akun)
-                    ->select('tb_franchise.id_franchise')
+            $bahanKurang = [];
+            $bahanDipakai = [];
+
+            foreach ($request->pesanan as $item) {
+                $produk = DB::table('tb_produk')
+                    ->where('nama_produk', $item['nama'])
                     ->first();
 
-                DB::table('tb_penjualan')->insert([
-                    'id_penjualan' => $idPenjualan,
-                    'id_franchise' => $idFranchise->id_franchise,
-                    'harga' => $request->total,
-                    'tanggal' => Carbon::now(),
-                ]);
-
-                $lastDetail = DB::table('tb_detailpenjualan')
-                    ->select('id_detailpenjualan')
-                    ->orderByDesc('id_detailpenjualan')
-                    ->first();
-
-                $lastNumber = $lastDetail ? (int) substr($lastDetail->id_detailpenjualan, -4) : 0;
-
-                foreach ($request->pesanan as $index => $item) {
-                    $newNumber = $lastNumber + $index + 1;
-                    $idDetail = 'DT' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-
-                    DB::table('tb_detailpenjualan')->insert([
-                        'id_detailpenjualan' => $idDetail,
-                        'id_penjualan' => $idPenjualan,
-                        'nama_produk' => $item['nama'],
-                        'harga' => $item['harga'] * $item['jumlah'],
-                        'jumlah' => $item['jumlah'],
+                if (!$produk) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Produk ' . $item['nama'] . ' tidak ditemukan.'
                     ]);
                 }
-            } elseif ($type_akun == 'user')
-            {
-                $lastPenjualan = DB::table('tb_penjualan')
-                    ->select('id_penjualan')
-                    ->orderByDesc('id_penjualan')
-                    ->first();
 
-                $idPenjualan = $lastPenjualan
-                    ? 'T' . str_pad((int) substr($lastPenjualan->id_penjualan, 1) + 1, 4, '0', STR_PAD_LEFT)
-                    : 'T0001';
+                $detailProduk = DB::table('tb_detailproduk')
+                    ->join('tb_bahanbaku', 'tb_detailproduk.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+                    ->where('tb_detailproduk.id_produk', $produk->id_produk)
+                    ->select(
+                        'tb_detailproduk.id_bahanbaku',
+                        'tb_detailproduk.jumlah',
+                        'tb_bahanbaku.nama_bahan'
+                    )
+                    ->get();
 
-                $id_akun = Session::get('user')['id_akun'];
-                $idFranchise = Session::get('user')['id_franchise'];
+                foreach ($detailProduk as $detail) {
+                    $totalDibutuhkan = $detail->jumlah * $item['jumlah'];
 
-                DB::table('tb_penjualan')->insert([
-                    'id_penjualan' => $idPenjualan,
-                    'id_franchise' => $idFranchise,
-                    'harga' => $request->total,
-                    'tanggal' => Carbon::now(),
-                ]);
+                    if (!isset($bahanDipakai[$detail->id_bahanbaku])) {
+                        $bahanDipakai[$detail->id_bahanbaku] = [
+                            'nama_bahan' => $detail->nama_bahan,
+                            'jumlah' => 0,
+                        ];
+                    }
 
-                $lastDetail = DB::table('tb_detailpenjualan')
-                    ->select('id_detailpenjualan')
-                    ->orderByDesc('id_detailpenjualan')
-                    ->first();
-
-                $lastNumber = $lastDetail ? (int) substr($lastDetail->id_detailpenjualan, -4) : 0;
-
-                foreach ($request->pesanan as $index => $item) {
-                    $newNumber = $lastNumber + $index + 1;
-                    $idDetail = 'DT' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-
-                    DB::table('tb_detailpenjualan')->insert([
-                        'id_detailpenjualan' => $idDetail,
-                        'id_penjualan' => $idPenjualan,
-                        'nama_produk' => $item['nama'],
-                        'harga' => $item['harga'] * $item['jumlah'],
-                        'jumlah' => $item['jumlah'],
-                    ]);
+                    $bahanDipakai[$detail->id_bahanbaku]['jumlah'] += $totalDibutuhkan;
                 }
             }
 
+            foreach ($bahanDipakai as $idBahanbaku => $itemBahan) {
+                $stokFranchise = DB::table('tb_stokfranchise')
+                    ->where('id_franchise', $idFranchise)
+                    ->where('id_bahanbaku', $idBahanbaku)
+                    ->first();
+
+                $stokTersedia = $stokFranchise ? $stokFranchise->stok : 0;
+
+                if ($stokTersedia < $itemBahan['jumlah']) {
+                    $bahanKurang[] =
+                        $itemBahan['nama_bahan'] .
+                        ' stok kurang ( Dibutuhkan: ' .
+                        $itemBahan['jumlah'] .
+                        ', stok tersedia: ' .
+                        $stokTersedia . ' )';
+                }
+            }
+
+            if (count($bahanKurang) > 0) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => implode("\n", $bahanKurang)
+                ]);
+            }
+
+            foreach ($bahanDipakai as $idBahanbaku => $itemBahan) {
+                DB::table('tb_stokfranchise')
+                    ->where('id_franchise', $idFranchise)
+                    ->where('id_bahanbaku', $idBahanbaku)
+                    ->update([
+                        'stok' => DB::raw('stok - ' . $itemBahan['jumlah'])
+                    ]);
+            }
+
+            $lastPenjualan = DB::table('tb_penjualan')
+                ->select('id_penjualan')
+                ->orderByDesc('id_penjualan')
+                ->first();
+
+            $idPenjualan = $lastPenjualan
+                ? 'T' . str_pad((int) substr($lastPenjualan->id_penjualan, 1) + 1, 4, '0', STR_PAD_LEFT)
+                : 'T0001';
+
+            DB::table('tb_penjualan')->insert([
+                'id_penjualan' => $idPenjualan,
+                'id_franchise' => $idFranchise,
+                'harga' => $request->total,
+                'tanggal' => Carbon::now(),
+            ]);
+
+            $lastDetail = DB::table('tb_detailpenjualan')
+                ->select('id_detailpenjualan')
+                ->orderByDesc('id_detailpenjualan')
+                ->first();
+
+            $lastNumber = $lastDetail ? (int) substr($lastDetail->id_detailpenjualan, -4) : 0;
+
+            foreach ($request->pesanan as $index => $item) {
+                $newNumber = $lastNumber + $index + 1;
+                $idDetail = 'DT' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+
+                DB::table('tb_detailpenjualan')->insert([
+                    'id_detailpenjualan' => $idDetail,
+                    'id_penjualan' => $idPenjualan,
+                    'nama_produk' => $item['nama'],
+                    'harga' => $item['harga'] * $item['jumlah'],
+                    'jumlah' => $item['jumlah'],
+                ]);
+            }
+
             DB::commit();
-            Log::info('kasir Baru disimpan', ['id_penjualan' => $idPenjualan]);
+
             return response()->json([
                 'success' => true,
                 'redirect' => route('printkasir', ['id_penjualan' => $idPenjualan])
             ]);
-            
+
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error("Checkout failed: " . $e->getMessage());
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Checkout gagal: ' . $e->getMessage() 
+                'message' => 'Checkout gagal: ' . $e->getMessage()
             ]);
         }
     }

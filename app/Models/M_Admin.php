@@ -28,16 +28,49 @@ class M_Admin extends Model
         return DB::table('tb_akun')->where('type_akun', 'user')->get();
     }
 
-    // Di M_Admin
     public function dataakunadmin($id_akun)
     {
         return DB::table('tb_akun')->where('type_akun', 'admin')->first();
     }
 
-
     public function dataproduk()
     {
-        return DB::table('tb_produk')->get();
+        $rows = DB::table('tb_produk')
+            ->leftJoin('tb_detailproduk', 'tb_produk.id_produk', '=', 'tb_detailproduk.id_produk')
+            ->leftJoin('tb_bahanbaku', 'tb_detailproduk.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
+            ->select(
+                'tb_produk.*',
+                'tb_bahanbaku.nama_bahan',
+                'tb_detailproduk.jumlah'
+            )
+            ->orderBy('tb_produk.id_produk')
+            ->get();
+
+        $produk = [];
+
+        foreach ($rows as $row) {
+
+            if (!isset($produk[$row->id_produk])) {
+
+                $produk[$row->id_produk] = (object) [
+                    'id_produk' => $row->id_produk,
+                    'nama_produk' => $row->nama_produk,
+                    'hpp' => $row->hpp,
+                    'harga' => $row->harga,
+                    'gambar_produk' => $row->gambar_produk,
+                    'bahan' => []
+                ];
+            }
+
+            if ($row->nama_bahan) {
+                $produk[$row->id_produk]->bahan[] = [
+                    'nama_bahan' => $row->nama_bahan,
+                    'jumlah' => $row->jumlah
+                ];
+            }
+        }
+
+        return collect($produk)->values();
     }
 
     public function datafranchisebaru()

@@ -347,6 +347,12 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
                 }
             }
 
+            DB::table('tb_log_gudang')->insert([
+                'aksi' => 'Selesai Pesanan',
+                'keterangan' => 'Pesanan dengan ID ' . $id . ' telah diselesaikan. Stok gudang telah di perbarui.',
+                'waktu' => now(),
+            ]);
+
             DB::table('tb_transaksi')
                 ->where('id_transaksi', $id)
                 ->update([

@@ -171,6 +171,62 @@ Edit Produk
                         </div>
 
                         <div class="form-group">
+                            <label>Bahan Baku</label>
+
+                            <div id="bahan-wrapper">
+                                @forelse($detailproduk as $detail)
+                                    <div class="row bahan-item mb-2">
+                                        <div class="col-md-7">
+                                            <select name="id_bahanbaku[]" class="form-control">
+                                                <option value="">-- Pilih Bahan Baku --</option>
+                                                @foreach($bahanbaku as $bahan)
+                                                    <option value="{{ $bahan->id_bahanbaku }}"
+                                                        {{ $detail->id_bahanbaku == $bahan->id_bahanbaku ? 'selected' : '' }}>
+                                                        {{ $bahan->nama_bahan }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <input type="number" name="jumlah_bahan[]" class="form-control"
+                                                placeholder="Jumlah" value="{{ $detail->jumlah }}">
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <button type="button" class="btn btn-danger btn-hapus-bahan">X</button>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="row bahan-item mb-2">
+                                        <div class="col-md-7">
+                                            <select name="id_bahanbaku[]" class="form-control">
+                                                <option value="">-- Pilih Bahan Baku --</option>
+                                                @foreach($bahanbaku as $bahan)
+                                                    <option value="{{ $bahan->id_bahanbaku }}">
+                                                        {{ $bahan->nama_bahan }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <input type="number" name="jumlah_bahan[]" class="form-control" placeholder="Jumlah">
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <button type="button" class="btn btn-danger btn-hapus-bahan">X</button>
+                                        </div>
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <button type="button" id="tambah-bahan" class="btn btn-success mt-2">
+                                Tambah Bahan
+                            </button>
+                        </div>
+
+                        <div class="form-group">
                             <label for="hpp">HPP</label>
                             <input type="text" name="hpp" class="form-control" id="hpp" 
                                    placeholder="Masukan HPP" value="{{ $produk->hpp }}">
@@ -233,6 +289,41 @@ Edit Produk
         };
         reader.readAsDataURL(event.target.files[0]);
     }
+
+    document.getElementById('tambah-bahan').addEventListener('click', function () {
+        const wrapper = document.getElementById('bahan-wrapper');
+
+        const html = `
+            <div class="row bahan-item mb-2">
+                <div class="col-md-7">
+                    <select name="id_bahanbaku[]" class="form-control">
+                        <option value="">-- Pilih Bahan Baku --</option>
+                        @foreach($bahanbaku as $bahan)
+                            <option value="{{ $bahan->id_bahanbaku }}">
+                                {{ $bahan->nama_bahan }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <input type="number" name="jumlah_bahan[]" class="form-control" placeholder="Jumlah">
+                </div>
+
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-danger btn-hapus-bahan">X</button>
+                </div>
+            </div>
+        `;
+
+        wrapper.insertAdjacentHTML('beforeend', html);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-hapus-bahan')) {
+            e.target.closest('.bahan-item').remove();
+        }
+    });
 </script>
 
 @endsection

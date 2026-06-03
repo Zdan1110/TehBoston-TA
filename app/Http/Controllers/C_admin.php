@@ -373,7 +373,9 @@ public function download($id_qr)
 
     public function tambahproduk()
     {
-        return view('admin.v_tambahproduk');
+        $bahanbaku = DB::table('tb_bahanbaku')->get();
+
+        return view('admin.v_tambahproduk', compact('bahanbaku'));
     }
 
     public function insertproduk(Request $request)
@@ -383,37 +385,76 @@ public function download($id_qr)
             'hpp' => 'required|integer',
             'harga' => 'required|integer',
             'gambar_produk' => 'required|file|mimes:jpg,jpeg,png,pdf',
-        ]);            
-        
-        $lastProduk = DB::table('tb_produk')
-            ->select('id_produk')
-            ->orderByDesc('id_produk')
-            ->first();
 
-        $idProduk = $lastProduk ? 
-            'P' . str_pad((int) substr($lastProduk->id_produk, 1) + 1, 4, '0', STR_PAD_LEFT) : 
-            'P0001';
+            'id_bahanbaku' => 'required|array',
+            'id_bahanbaku.*' => 'required',
+            'jumlah_bahan' => 'required|array',
+            'jumlah_bahan.*' => 'required|integer|min:1',
+        ]);
 
-        $fileproduk = $request->file('gambar_produk');
-        $fileNameproduk = $request->nama_produk . '.' . $fileproduk->extension();
-        $fileproduk->move(public_path('uploads/produk'), $fileNameproduk);
-
-        $dataproduk = [
-            'id_produk' => $idProduk,
-            'nama_produk' => $request->nama_produk,
-            'hpp' => $request->hpp,
-            'harga' => $request->harga,
-            'gambar_produk' => $fileNameproduk,
-        ];
+        DB::beginTransaction();
 
         try {
+            $lastProduk = DB::table('tb_produk')
+                ->select('id_produk')
+                ->orderByDesc('id_produk')
+                ->first();
+
+            $idProduk = $lastProduk
+                ? 'P' . str_pad((int) substr($lastProduk->id_produk, 1) + 1, 4, '0', STR_PAD_LEFT)
+                : 'P0001';
+
+            $fileproduk = $request->file('gambar_produk');
+            $fileNameproduk = $request->nama_produk . '.' . $fileproduk->extension();
+            $fileproduk->move(public_path('uploads/produk'), $fileNameproduk);
+
+            $dataproduk = [
+                'id_produk' => $idProduk,
+                'nama_produk' => $request->nama_produk,
+                'hpp' => $request->hpp,
+                'harga' => $request->harga,
+                'gambar_produk' => $fileNameproduk,
+            ];
+
             DB::table('tb_produk')->insert($dataproduk);
+
+            $lastDetailProduk = DB::table('tb_detailproduk')
+                ->select('id_detailproduk')
+                ->orderByDesc('id_detailproduk')
+                ->first();
+
+            $lastNumber = $lastDetailProduk
+                ? (int) substr($lastDetailProduk->id_detailproduk, 2)
+                : 0;
+
+            foreach ($request->id_bahanbaku as $index => $idBahanbaku) {
+                $jumlah = $request->jumlah_bahan[$index];
+
+                $newNumber = $lastNumber + $index + 1;
+                $idDetailProduk = 'PD' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+
+                DB::table('tb_detailproduk')->insert([
+                    'id_detailproduk' => $idDetailProduk,
+                    'id_produk' => $idProduk,
+                    'id_bahanbaku' => $idBahanbaku,
+                    'jumlah' => $jumlah,
+                ]);
+            }
+
+            DB::commit();
+
             $this->tambahNotifikasi("Produk '{$request->nama_produk}' berhasil ditambahkan.");
             Log::info('Data produk berhasil disimpan.', $dataproduk);
+
             return redirect('/admin/tabelproduk')->with('success', 'Tambah Produk Berhasil!.');
+
         } catch (\Exception $e) {
+            DB::rollBack();
+
             Log::error('Gagal menyimpan produk: ' . $e->getMessage());
-            return redirect('/admin/produk/add')->with('error', 'Terjadi kesalahan tambah produk. Silakan coba lagi.');
+
+            return redirect('/admin/produk/add')
+                ->with('error', 'Terjadi kesalahan tambah produk. Silakan coba lagi.');
         }
     }
 
@@ -487,9 +528,14 @@ public function download($id_qr)
             return redirect()->route('adminproduk')->with('error', 'Produk tidak ditemukan.');
         }
 
-        return view('admin.v_editproduk', compact('produk'));
-    }
+        $bahanbaku = DB::table('tb_bahanbaku')->get();
 
+        $detailproduk = DB::table('tb_detailproduk')
+            ->where('id_produk', $id_produk)
+            ->get();
+
+        return view('admin.v_editproduk', compact('produk', 'bahanbaku', 'detailproduk'));
+    }
 
     public function updateproduk($id_produk)
     {
@@ -499,27 +545,71 @@ public function download($id_qr)
             'hpp' => 'required|integer',
             'harga' => 'required|integer',
             'gambar_produk' => 'file|mimes:jpg,jpeg,png,pdf',
+
+            'id_bahanbaku' => 'required|array',
+            'id_bahanbaku.*' => 'required',
+            'jumlah_bahan' => 'required|array',
+            'jumlah_bahan.*' => 'required|integer|min:1',
         ]);
-    
-        $data = [
-            'id_produk' => Request()->id_produk,
-            'nama_produk' => Request()->nama_produk,
-            'hpp' => Request()->hpp,
-            'harga' => Request()->harga,
-        ];
 
-        if (Request()->file('gambar_produk')) {
-            $fileproduk = Request()->file('gambar_produk');
-            $fileNameproduk = Request()->nama_produk . '.' . $fileproduk->extension();
-            $fileproduk->move(public_path('uploads/produk'), $fileNameproduk);
-            $data['gambar_produk'] = $fileNameproduk;
+        DB::beginTransaction();
+
+        try {
+            $data = [
+                'id_produk' => Request()->id_produk,
+                'nama_produk' => Request()->nama_produk,
+                'hpp' => Request()->hpp,
+                'harga' => Request()->harga,
+            ];
+
+            if (Request()->file('gambar_produk')) {
+                $fileproduk = Request()->file('gambar_produk');
+                $fileNameproduk = Request()->nama_produk . '.' . $fileproduk->extension();
+                $fileproduk->move(public_path('uploads/produk'), $fileNameproduk);
+                $data['gambar_produk'] = $fileNameproduk;
+            }
+
+            $this->M_Admin->editDataproduk($id_produk, $data);
+
+            DB::table('tb_detailproduk')
+                ->where('id_produk', $id_produk)
+                ->delete();
+
+            $lastDetailProduk = DB::table('tb_detailproduk')
+                ->select('id_detailproduk')
+                ->orderByDesc('id_detailproduk')
+                ->first();
+
+            $lastNumber = $lastDetailProduk
+                ? (int) substr($lastDetailProduk->id_detailproduk, 2)
+                : 0;
+
+            foreach (Request()->id_bahanbaku as $index => $idBahanbaku) {
+                $jumlah = Request()->jumlah_bahan[$index];
+
+                $newNumber = $lastNumber + $index + 1;
+                $idDetailProduk = 'PD' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+
+                DB::table('tb_detailproduk')->insert([
+                    'id_detailproduk' => $idDetailProduk,
+                    'id_produk' => $id_produk,
+                    'id_bahanbaku' => $idBahanbaku,
+                    'jumlah' => $jumlah,
+                ]);
+            }
+
+            DB::commit();
+
+            $this->tambahNotifikasi("Produk '{$data['nama_produk']}' berhasil diperbarui.");
+
+            return redirect()->route('adminproduk')->with('pesan', 'Data berhasil diperbarui!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Gagal update produk: ' . $e->getMessage());
         }
-
-        $this->M_Admin->editDataproduk($id_produk, $data);
-        $this->tambahNotifikasi("Produk '{$data['nama_produk']}' berhasil diperbarui.");
-        return redirect()->route('adminproduk')->with('pesan', 'Data berhasil diperbarui!');
     }
-
     public function deletefranchise($id_franchise)
 {
     // Hapus semua kasir yang terkait dengan franchise ini

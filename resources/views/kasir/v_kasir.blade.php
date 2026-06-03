@@ -108,31 +108,55 @@
     background-color: #f0f0f0;
   }
 
-  .alert {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  background-color: #ff4d4d; 
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: opacity 0.4s ease;
+.alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    min-width: 350px;
+    max-width: 500px;
+
+    padding: 20px 25px;
+    border-radius: 15px;
+
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+
+    box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+
+    z-index: 99999;
+
+    transition: all 0.3s ease;
+    opacity: 1;
 }
 
 .alert.success {
-  background-color: #28a745; 
+    background: #16a34a;
+}
+
+.alert.error {
+    background: #dc2626;
 }
 
 .alert.hidden {
-  opacity: 0;
-  pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -50%) scale(0.8);
+}
+
+.alert-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 99998;
+}
+
+.alert-overlay.hidden {
+    display: none;
 }
 
 .menu-item.best-seller {
@@ -318,8 +342,11 @@
       </table>
     </div>
   </div>
+  <div id="alert-overlay" class="alert-overlay hidden"></div>
+
   <div id="custom-alert" class="alert hidden">
-  <span id="alert-message"></span>
+      <span id="alert-message"></span>
+  </div>
   </div>
 
 @endsection

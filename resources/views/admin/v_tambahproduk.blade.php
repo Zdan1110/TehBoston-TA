@@ -143,7 +143,7 @@ Tambah Produk
 
 <div class="container-fluid" style="margin-top:70px">
     <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
+        <div class="col-md-6 col-lg-7">
             <!-- Card Design dengan header tetap -->
             <div class="card card-primary">
                 <div class="card-header" style="background-color: var(--dark-green)">
@@ -161,6 +161,37 @@ Tambah Produk
                                     {{ $message }}
                                 @enderror
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Bahan Baku</label>
+
+                            <div id="bahan-wrapper">
+                                <div class="row bahan-item mb-2">
+                                    <div class="col-md-7">
+                                        <select name="id_bahanbaku[]" class="form-control">
+                                            <option value="">-- Pilih Bahan Baku --</option>
+                                            @foreach($bahanbaku as $bahan)
+                                                <option value="{{ $bahan->id_bahanbaku }}">
+                                                    {{ $bahan->nama_bahan }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <input type="number" name="jumlah_bahan[]" class="form-control" placeholder="Jumlah">
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-danger btn-hapus-bahan">X</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" id="tambah-bahan" class="btn btn-success mt-2">
+                                Tambah Bahan
+                            </button>
                         </div>
 
                         <div class="form-group">
@@ -206,4 +237,41 @@ Tambah Produk
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('tambah-bahan').addEventListener('click', function () {
+        const wrapper = document.getElementById('bahan-wrapper');
+
+        const html = `
+            <div class="row bahan-item mb-2">
+                <div class="col-md-7">
+                    <select name="id_bahanbaku[]" class="form-control">
+                        <option value="">-- Pilih Bahan Baku --</option>
+                        @foreach($bahanbaku as $bahan)
+                            <option value="{{ $bahan->id_bahanbaku }}">
+                                {{ $bahan->nama_bahan }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <input type="number" name="jumlah_bahan[]" class="form-control" placeholder="Jumlah">
+                </div>
+
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-danger btn-hapus-bahan">X</button>
+                </div>
+            </div>
+        `;
+
+        wrapper.insertAdjacentHTML('beforeend', html);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-hapus-bahan')) {
+            e.target.closest('.bahan-item').remove();
+        }
+    });
+</script>
 @endsection

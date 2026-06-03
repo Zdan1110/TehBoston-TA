@@ -41,6 +41,13 @@ Tabel Produk
                               <td style="white-space: nowrap;">{{ $no++ }}</td>
                               <td style="white-space: nowrap;">{{ $data->id_produk }}</td>
                               <td style="white-space: nowrap;">{{ $data->nama_produk }}</td>
+                              <td>
+                                  @foreach($data->bahan as $bahan)
+                                      <div>
+                                          • {{ $bahan['nama_bahan'] }} ({{ $bahan['jumlah'] }})
+                                      </div>
+                                  @endforeach
+                              </td>
                               <td style="white-space: nowrap;">Rp {{ number_format($data->hpp, 0, ',', '.') }}</td>
                               <td style="white-space: nowrap;">Rp {{ number_format($data->harga, 0, ',', '.') }}</td>
                               <td style="white-space: nowrap;"><img src="{{ url('uploads/produk/'. $data->gambar_produk) }}" width="100px"></td>
