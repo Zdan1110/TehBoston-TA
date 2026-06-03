@@ -350,7 +350,6 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
         $jumlahList = $request->jumlah;
         $hargaList = $request->harga;
         
-        // Total harga semua item
         $totalHarga = array_sum(array_map(function ($jml, $hrg) {
             return $jml * ($hrg ?? 0);
         }, $jumlahList, $hargaList));
@@ -362,10 +361,10 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
             ->first();
 
             if ($lastCalon) {
-            $lastNumcalon = (int) substr($lastCalon->id_transaksi, 1); // ambil angka setelah 'C'
+            $lastNumcalon = (int) substr($lastCalon->id_transaksi, 1); 
             $idGudang = 'G' . str_pad($lastNumcalon + 1, 4, '0', STR_PAD_LEFT);
             } else {
-            $idGudang = 'G0001'; // Kalau belum ada data
+            $idGudang = 'G0001'; 
             }
 
             DB::table('tb_transaksi')->insert([
@@ -375,7 +374,6 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
                 'total' => $totalHarga,
             ]);
             
-            // Ambil ID pengeluaran terakhir
             $last = DB::table('tb_pemasukan')->orderBy('id_pemasukan', 'desc')->first();
             $lastId = $last ? intval(substr($last->id_pemasukan, 1)) : 0;
             
@@ -386,10 +384,10 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
             ->first();
 
             if ($lastCalon) {
-            $lastNumcalon = (int) substr($lastCalon->id_pemasukan, 1); // ambil angka setelah 'C'
+            $lastNumcalon = (int) substr($lastCalon->id_pemasukan, 1); 
             $idPemasukan = 'M' . str_pad($lastNumcalon + 1, 4, '0', STR_PAD_LEFT);
             } else {
-            $idPemasukan = 'M0001'; // Kalau belum ada data
+            $idPemasukan = 'M0001';
             }
             
             $totalMasuk = $hargaList[$i] * $jumlahList[$i];
@@ -438,7 +436,6 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
                 'waktu' => now(),
             ]);
 
-            // Update stok di tb_bahanbaku
             DB::table('tb_bahanbaku')->where('id_bahanbaku',$id_bahanbaku)->increment('stok', $jumlahList[$i]);
             }
             return redirect()->route('gudang.printnotamasuk', ['id' => $idGudang])->with('success', 'Barang masuk & struk berhasil disimpan!');
@@ -1696,7 +1693,6 @@ public function hapusTransaksimasuk($id)
     
     public function printNotamasuk($id)
     {
-        // Ambil semua baris pengeluaran berdasarkan id_pengeluaran, join bahan baku
         $data = DB::table('tb_pemasukan')
             ->join('tb_bahanbaku', 'tb_pemasukan.id_bahanbaku', '=', 'tb_bahanbaku.id_bahanbaku')
             ->join('tb_supplier', 'tb_bahanbaku.id_supplier', '=', 'tb_supplier.id_supplier')
@@ -1714,13 +1710,11 @@ public function hapusTransaksimasuk($id)
                 ->first();
 
 
-        $header = $data->first(); // untuk keperluan header nota
+        $header = $data->first(); 
         
-        // 🔹 Generate PDF dari view yang sama
         $pdf = Pdf::loadView('gudang.nota_masuk', compact('data', 'header', 'total'))
-            ->setPaper([0, 0, 226.77, 600], 'portrait'); // ukuran thermal 80mm
+            ->setPaper([0, 0, 226.77, 600], 'portrait'); 
     
-        // 🔹 Simpan file PDF ke folder public/uploads/nota
         $filename = 'nota_' . $id . '.pdf';
         $path = public_path('uploads/strukdc/' . $filename);
         $pdf->save($path);
@@ -1728,7 +1722,7 @@ public function hapusTransaksimasuk($id)
         DB::table('tb_transaksi')
         ->where('id_transaksi', $id)
         ->update([
-            'struk' => $filename, // isi dengan nilai baru
+            'struk' => $filename, 
         ]);
 
         return view('gudang.nota_masuk', compact('data', 'header', 'total'));

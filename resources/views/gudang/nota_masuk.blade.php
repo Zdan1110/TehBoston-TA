@@ -53,6 +53,15 @@
             margin-top: 10px;
         }
 
+        .btn-print a {
+            display: inline-block;
+            padding: 8px 14px;
+            background: #198754;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+
         @media print {
             .btn-print {
                 display: none;
@@ -113,22 +122,33 @@
         <div class="nota-footer">
             <p>Terima kasih!</p>
         </div>
+
+        <div class="btn-print">
+            <a href="{{ url('gudang/riwayat#masuk') }}">Kembali</a>
+        </div>
     </div>
 
     <script>
-        window.onload = function () {
-            window.print();
-        };
+        let alreadyRedirect = false;
+
+        function kembaliKeRiwayat() {
+            if (alreadyRedirect) return;
+            alreadyRedirect = true;
+
+            setTimeout(function () {
+                window.location.href = "{{ url('gudang/riwayat#masuk') }}";
+            }, 1000);
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                window.print();
+            }, 500);
+        });
 
         window.onafterprint = function () {
-            window.location.href = "{{ url('gudang/riwayat') }}";
+            kembaliKeRiwayat();
         };
-
-        window.matchMedia('print').addListener(function(mql) {
-            if (!mql.matches) {
-                window.location.href = "{{ url('gudang/riwayat') }}";
-            }
-        });
     </script>
 </body>
 </html>
