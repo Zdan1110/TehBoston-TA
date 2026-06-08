@@ -24,11 +24,11 @@ class AuthController extends Controller
         
 
         if (!$user) {
-            return back()->with('error', 'Username atau Email tidak ditemukan');
+            return redirect()->back()->withInput()->with('error', 'Username atau Email tidak ditemukan');
         }
 
         if (!Hash::check($request->password, $user->password)) {
-            return back()->with('error', 'Password salah');
+            return redirect()->back()->withInput()->with('error', 'Password salah');
         }
         
         if ($user->type_akun == 'kasir'){

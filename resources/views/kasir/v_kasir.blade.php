@@ -178,6 +178,50 @@
   z-index: 10;
 }
 
+.menu-item.low-stock {
+    border: 2px solid #dc3545;
+    position: relative;
+}
+
+.ribbon-stock {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc3545;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    z-index: 10;
+}
+
+.menu-item.out-stock {
+    background-color: #e5e7eb;
+    border: 2px solid #6b7280;
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+    position: relative;
+}
+
+.menu-item.out-stock img {
+    filter: grayscale(100%);
+}
+
+.ribbon-out {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #6b7280;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    z-index: 10;
+}
+
 .btn-jumlah {
     width: 32px;
     height: 32px;
@@ -247,14 +291,34 @@
 
 </style>
 
-      <div class="menu">
+    <div class="menu">
       @foreach ($kasir as $data)
       @php
         $isBestSeller = ($data->nama_produk === $bestSellers);
+        $isLowStock = in_array($data->nama_produk, $produkMenipis);
+        $isOutStock = in_array($data->nama_produk, $produkHabis);
       @endphp
-      <div class="menu-item {{ $isBestSeller ? 'best-seller' : '' }}" onclick="addToOrder('{{ $data->nama_produk }}', {{ $data->harga }})">
-        @if($isBestSeller)
-          <div class="ribbon">Best Seller</div>
+        <div class="menu-item
+            {{ $isOutStock ? 'out-stock' : '' }}
+            {{ !$isOutStock && $isLowStock ? 'low-stock' : '' }}
+            {{ !$isOutStock && !$isLowStock && $isBestSeller ? 'best-seller' : '' }}"
+            
+            @if(!$isOutStock)
+                onclick="addToOrder('{{ $data->nama_produk }}', {{ $data->harga }})"
+            @endif
+        >
+        @if($isOutStock)
+            <div class="ribbon-out">
+                Stok Habis
+            </div>
+        @elseif($isLowStock)
+            <div class="ribbon-stock">
+                Hampir Habis
+            </div>
+        @elseif($isBestSeller)
+            <div class="ribbon">
+                Best Seller
+            </div>
         @endif
         <img src="{{ asset('uploads/produk/'.$data->gambar_produk) }}" alt="{{ $data->nama_produk }}" loading="lazy" width="300" height="300">
         <p>{{ $data->nama_produk }}<br>Rp{{ number_format($data->harga, 0, ',', '.') }}</p>

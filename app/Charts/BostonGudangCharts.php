@@ -45,18 +45,28 @@ class BostonGudangCharts
 
             if ($total == 0) {
                 return $this->chart->pieChart()
-                    ->setTitle("Distribusi Kosong ($data - $tanggalfix)")
+                    ->setTitle('')
                     ->setLabels(['Tidak Ada Data'])
                     ->addData([1])
-                    ->setWidth(400) // default untuk PC
+                    ->setWidth(500)
                     ->setHeight(400)
                     ->setOptions([
+                        'title' => [
+                            'style' => [
+                                'fontSize' => '16px'
+                            ]
+                        ],
                         'responsive' => [
                             [
-                                'breakpoint' => 768, // untuk perangkat <768px seperti smartphone
+                                'breakpoint' => 768,
                                 'options' => [
                                     'chart' => [
                                         'width' => 400
+                                    ],
+                                    'title' => [
+                                        'style' => [
+                                            'fontSize' => '12px'
+                                        ]
                                     ],
                                     'legend' => [
                                         'position' => 'bottom'
@@ -68,18 +78,28 @@ class BostonGudangCharts
             }
 
         return $this->chart->pieChart()
-            ->setTitle("Distribusi Pemasukan dan Pengeluaran ($data - $tanggalfix)")
+            ->setTitle('')
             ->setLabels(['Pemasukan', 'Pengeluaran'])
             ->addData([(int)$jumlahPemasukan, (int)$jumlahPengeluaran])
-            ->setWidth(400) // default untuk PC
+            ->setWidth(500) 
             ->setHeight(400)
             ->setOptions([
+                'title' => [
+                    'style' => [
+                        'fontSize' => '16px'
+                    ]
+                ],
                 'responsive' => [
                     [
-                        'breakpoint' => 768, // untuk perangkat <768px seperti smartphone
+                        'breakpoint' => 768,
                         'options' => [
                             'chart' => [
                                 'width' => 400
+                            ],
+                            'title' => [
+                                'style' => [
+                                    'fontSize' => '12px'
+                                ]
                             ],
                             'legend' => [
                                 'position' => 'bottom'

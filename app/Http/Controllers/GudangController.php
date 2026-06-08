@@ -19,8 +19,9 @@ use App\Exports\RiwayatKeluarExport;
 class GudangController extends Controller
 {
 
-public function index(Request $request, BostonGudangCharts $chartBuilder)
+    public function index(Request $request, BostonGudangCharts $chartBuilder)
     {
+        \Carbon\Carbon::setLocale('id');
         $bahan = $request->query('bahan');
 
         if ($bahan) {
@@ -58,11 +59,14 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
                 ->where('tb_bahanbaku.jenis_bahan', $data)
                 ->distinct('tb_supplier.id_supplier')
                 ->count('tb_supplier.id_supplier');
-        
-        $tanggal = $request->input('tanggal');
-        $chart = $chartBuilder->build($tanggal, $data);
+                
+        $bulan = $request->input('bulan', now()->month);
+        $tahun = $request->input('tahun', now()->year);
 
-        $tanggal = Carbon::now()->startOfMonth()->toDateString();
+        $tanggal = $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
+
+        $chart = $chartBuilder->build($tanggal, $data);
+        $tanggalfix = Carbon::createFromDate($tahun, $bulan, 1)->translatedFormat('F Y');
 
         $bahanBakuLists = DB::table('tb_bahanbaku')->get();
         foreach ($bahanBakuLists as $bahans) {
@@ -73,7 +77,6 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
                 ->get();
                 
                 if ($dataSudahAda->isEmpty()) {
-                    // Ambil semua data dari tabel bahan baku
                     $bahanBakuList = DB::table('tb_bahanbaku')->get();
                     
                     $lastCalon = DB::table('tb_laporanstok')
@@ -82,10 +85,10 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
                     ->first();
                     
                     if ($lastCalon) {
-                        $lastNumcalon = (int) substr($lastCalon->id_laporan, 1); // ambil angka setelah 'C'
+                        $lastNumcalon = (int) substr($lastCalon->id_laporan, 1); 
                         $idLaporan = 'L' . str_pad($lastNumcalon + 1, 4, '0', STR_PAD_LEFT);
                     } else {
-                        $idLaporan = 'L0001'; // Kalau belum ada data
+                        $idLaporan = 'L0001'; 
                     }
                     
                     DB::table('tb_laporanstok')->insert([
@@ -105,7 +108,7 @@ public function index(Request $request, BostonGudangCharts $chartBuilder)
                 ->limit(10)
                 ->get();
 
-        return view('gudang.index', compact('tanggal', 'chart', 'data', 'bahan', 'stok_terendah', 'stok_tertinggi', 'totalpemasukan', 'totalpengeluaran', 'totalbahan', 'totalsupplier', 'logAktivitas'));
+        return view('gudang.index', compact('tanggal', 'tanggalfix', 'chart', 'data', 'bahan', 'stok_terendah', 'stok_tertinggi', 'totalpemasukan', 'totalpengeluaran', 'totalbahan', 'totalsupplier', 'logAktivitas'));
     }
 
     public function showFormBarangMasuk()

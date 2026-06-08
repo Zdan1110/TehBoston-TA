@@ -6,23 +6,27 @@
 <div class="row">
 @php
     $selectedBahan = request()->query('bahan') ?? 'serbuk';
+    $filter = [
+        'bulan' => request('bulan'),
+        'tahun' => request('tahun')
+    ];
 @endphp
 
 <div class="mb-4 d-flex flex-wrap gap-2">
     <h6 class="text-uppercase text-muted fw-bold small">Filter Jenis Bahan Barang : </h6>
 
-    <a href="{{ route('gudang.index') }}"
-       class="btn {{ $selectedBahan == 'serbuk' ? 'btn-success' : 'btn-outline-success' }}">
+    <a href="{{ route('gudang.index', array_merge($filter, ['bahan' => 'serbuk'])) }}"
+    class="btn {{ $selectedBahan == 'serbuk' ? 'btn-success' : 'btn-outline-success' }}">
         Serbuk
     </a>
 
-    <a href="{{ route('gudang.index', ['bahan' => 'Sirup']) }}"
-       class="btn {{ $selectedBahan == 'Sirup' ? 'btn-warning' : 'btn-outline-warning' }}">
+    <a href="{{ route('gudang.index', array_merge($filter, ['bahan' => 'Sirup'])) }}"
+    class="btn {{ $selectedBahan == 'Sirup' ? 'btn-warning' : 'btn-outline-warning' }}">
         Sirup
     </a>
 
-    <a href="{{ route('gudang.index', ['bahan' => 'lain-lain']) }}"
-       class="btn {{ $selectedBahan == 'lain-lain' ? 'btn-danger' : 'btn-outline-danger' }}">
+    <a href="{{ route('gudang.index', array_merge($filter, ['bahan' => 'lain-lain'])) }}"
+    class="btn {{ $selectedBahan == 'lain-lain' ? 'btn-danger' : 'btn-outline-danger' }}">
         Lainnya
     </a>
 </div>
@@ -100,7 +104,7 @@
     <!-- Quick Chart - Perbaikan di sini -->
     <form method="GET" class="">
         <div class="d-flex align-items-center gap-2">
-            <label for="bulan" class="form-label m-0">Filter Bulan:</label>
+            <label for="bulan" class="form-label m-0">Filter Chart:</label>
             <select name="bulan" id="bulan" class="form-control" style="width: 120px;">
                 @for ($m = 1; $m <= 12; $m++)
                     <option value="{{ $m }}" {{ request('bulan') == $m ? 'selected' : '' }}>
@@ -121,13 +125,15 @@
         </div>
     </form>
 
+    <div class="card" style="max-width:700px; margin:auto;">
+        <h5 class="chart-title">
+            Distribusi Pemasukan dan Pengeluaran ({{ $tanggalfix }})
+        </h5>
 
-    <div class="card" style="max-width: 700px; margin: auto;">
-        <div div class="w-100">
+        <div class="chart-wrapper">
             {!! $chart->container() !!}
         </div>
     </div>
-
 
     <!-- Quick Actions - Perbaikan di sini -->
     <div class="col-lg-4 mb-4 mt-4">

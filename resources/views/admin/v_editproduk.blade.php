@@ -200,14 +200,34 @@ Edit Produk
                                 @empty
                                     <div class="row bahan-item mb-2">
                                         <div class="col-md-7">
-                                            <select name="id_bahanbaku[]" class="form-control">
-                                                <option value="">-- Pilih Bahan Baku --</option>
-                                                @foreach($bahanbaku as $bahan)
-                                                    <option value="{{ $bahan->id_bahanbaku }}">
-                                                        {{ $bahan->nama_bahan }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div class="position-relative">
+                                                <input type="text"
+                                                    class="form-control bahan-input"
+                                                    placeholder="Ketik / pilih bahan..."
+                                                    autocomplete="off"
+                                                    value="{{ $bahan->nama_bahan ?? '' }}"
+                                                    oninput="filterBahan(this)"
+                                                    onclick="showBahanList(this)">
+
+                                                <input type="hidden"
+                                                    name="id_bahanbaku[]"
+                                                    class="id-bahan-input"
+                                                    value="{{ $detail->id_bahanbaku ?? '' }}">
+
+                                                <div class="bahan-list list-group position-absolute w-100 d-none"
+                                                    style="z-index:9999; max-height:220px; overflow-y:auto;">
+                                                    @foreach($bahanbaku as $bahan)
+                                                        <button type="button"
+                                                            class="list-group-item list-group-item-action bahan-option"
+                                                            data-id="{{ $bahan->id_bahanbaku }}"
+                                                            data-nama="{{ strtolower($bahan->nama_bahan) }}"
+                                                            data-text="{{ $bahan->nama_bahan }}"
+                                                            onclick="pilihBahan(this)">
+                                                            {{ $bahan->nama_bahan }}
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-4">
@@ -273,7 +293,7 @@ Edit Produk
                     <div class="card-footer" style="background-color: var(--dark-green)">
                         <button type="submit" class="btn btn-warning">Update</button>
                         <a href="{{ url()->previous() }}" class="btn btn-secondary" style="margin-left: 10px;">Kembali</a>
-</div>
+                    </div>
                     </div>
                 </form>
             </div>
@@ -296,14 +316,34 @@ Edit Produk
         const html = `
             <div class="row bahan-item mb-2">
                 <div class="col-md-7">
-                    <select name="id_bahanbaku[]" class="form-control">
-                        <option value="">-- Pilih Bahan Baku --</option>
-                        @foreach($bahanbaku as $bahan)
-                            <option value="{{ $bahan->id_bahanbaku }}">
-                                {{ $bahan->nama_bahan }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <div class="position-relative">
+                        <input type="text"
+                            class="form-control bahan-input"
+                            placeholder="Ketik / pilih bahan..."
+                            autocomplete="off"
+                            value="{{ $bahan->nama_bahan ?? '' }}"
+                            oninput="filterBahan(this)"
+                            onclick="showBahanList(this)">
+
+                        <input type="hidden"
+                            name="id_bahanbaku[]"
+                            class="id-bahan-input"
+                            value="{{ $detail->id_bahanbaku ?? '' }}">
+
+                        <div class="bahan-list list-group position-absolute w-100 d-none"
+                            style="z-index:9999; max-height:220px; overflow-y:auto;">
+                            @foreach($bahanbaku as $bahan)
+                                <button type="button"
+                                    class="list-group-item list-group-item-action bahan-option"
+                                    data-id="{{ $bahan->id_bahanbaku }}"
+                                    data-nama="{{ strtolower($bahan->nama_bahan) }}"
+                                    data-text="{{ $bahan->nama_bahan }}"
+                                    onclick="pilihBahan(this)">
+                                    {{ $bahan->nama_bahan }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-md-4">
@@ -322,6 +362,53 @@ Edit Produk
     document.addEventListener('click', function (e) {
         if (e.target.classList.contains('btn-hapus-bahan')) {
             e.target.closest('.bahan-item').remove();
+        }
+    });
+
+    function showBahanList(input) {
+        const row = input.closest('.bahan-item');
+        const list = row.querySelector('.bahan-list');
+
+        list.classList.remove('d-none');
+        filterBahan(input);
+    }
+
+    function filterBahan(input) {
+        const row = input.closest('.bahan-item');
+        const keyword = input.value.toLowerCase();
+
+        const list = row.querySelector('.bahan-list');
+        const options = row.querySelectorAll('.bahan-option');
+
+        list.classList.remove('d-none');
+
+        options.forEach(option => {
+            const nama = option.dataset.nama;
+
+            if (nama.includes(keyword)) {
+                option.classList.remove('d-none');
+            } else {
+                option.classList.add('d-none');
+            }
+        });
+
+        row.querySelector('.id-bahan-input').value = '';
+    }
+
+    function pilihBahan(button) {
+        const row = button.closest('.bahan-item');
+
+        row.querySelector('.bahan-input').value = button.dataset.text;
+        row.querySelector('.id-bahan-input').value = button.dataset.id;
+
+        row.querySelector('.bahan-list').classList.add('d-none');
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.bahan-item')) {
+            document.querySelectorAll('.bahan-list').forEach(list => {
+                list.classList.add('d-none');
+            });
         }
     });
 </script>

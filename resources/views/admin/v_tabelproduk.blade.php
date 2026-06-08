@@ -28,6 +28,7 @@ Tabel Produk
                             <th style="white-space: nowrap;">No</th>
                             <th style="white-space: nowrap;">ID Produk</th>
                             <th style="white-space: nowrap;">Nama Produk</th>
+                            <th style="white-space: nowrap;">Bahan Produk</th>
                             <th style="white-space: nowrap;">HPP</th>
                             <th style="white-space: nowrap;">Harga Jual</th>
                             <th style="white-space: nowrap;">Gambar Produk</th>

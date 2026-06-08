@@ -99,6 +99,25 @@
       margin-right: 5px;
     }
 
+    .chart-wrapper{
+        width: 500px;
+        margin: auto;
+    }
+
+    .chart-title{
+        font-size: 18px;
+    }
+
+    @media (max-width: 768px){
+        .chart-wrapper{
+            width: 100%;
+        }
+
+        .chart-title{
+            font-size: 16px;
+        }
+    }
+
     /* FLOATING BUTTON */
     .mobile-menu-btn {
       display: none;

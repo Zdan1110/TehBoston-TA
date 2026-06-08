@@ -138,6 +138,50 @@ class KasirController extends Controller
             ->limit(5)
             ->pluck('nama_produk')
             ->first();
+
+        $produkMenipis = DB::table('tb_stokfranchise')
+            ->join(
+                'tb_detailproduk',
+                'tb_stokfranchise.id_bahanbaku',
+                '=',
+                'tb_detailproduk.id_bahanbaku'
+            )
+            ->join(
+                'tb_produk',
+                'tb_detailproduk.id_produk',
+                '=',
+                'tb_produk.id_produk'
+            )
+            ->where('tb_stokfranchise.id_franchise', $id_franchise)
+            ->where('tb_stokfranchise.stok', '<=', 10)
+            ->distinct()
+            ->pluck('tb_produk.nama_produk')
+            ->toArray();
+
+            $produkHabis = DB::table('tb_detailproduk')
+            ->join(
+                'tb_stokfranchise',
+                'tb_detailproduk.id_bahanbaku',
+                '=',
+                'tb_stokfranchise.id_bahanbaku'
+            )
+            ->join(
+                'tb_produk',
+                'tb_detailproduk.id_produk',
+                '=',
+                'tb_produk.id_produk'
+            )
+            ->where('tb_stokfranchise.id_franchise', $id_franchise)
+            ->whereColumn(
+                'tb_stokfranchise.stok',
+                '<',
+                'tb_detailproduk.jumlah'
+            )
+            ->select('tb_produk.nama_produk')
+            ->distinct()
+            ->pluck('nama_produk')
+            ->toArray();
+
         } elseif ($type_akun == 'user')
         {
             $id_franchise = Session::get('user')['id_franchise'];
@@ -150,10 +194,54 @@ class KasirController extends Controller
                 ->limit(5)
                 ->pluck('nama_produk')
                 ->first();
+
+            $produkMenipis = DB::table('tb_stokfranchise')
+                ->join(
+                    'tb_detailproduk',
+                    'tb_stokfranchise.id_bahanbaku',
+                    '=',
+                    'tb_detailproduk.id_bahanbaku'
+                )
+                ->join(
+                    'tb_produk',
+                    'tb_detailproduk.id_produk',
+                    '=',
+                    'tb_produk.id_produk'
+                )
+                ->where('tb_stokfranchise.id_franchise', $id_franchise)
+                ->where('tb_stokfranchise.stok', '<', 10)
+                ->distinct()
+                ->pluck('tb_produk.nama_produk')
+                ->toArray();
+
+                $produkHabis = DB::table('tb_detailproduk')
+                ->join(
+                    'tb_stokfranchise',
+                    'tb_detailproduk.id_bahanbaku',
+                    '=',
+                    'tb_stokfranchise.id_bahanbaku'
+                )
+                ->join(
+                    'tb_produk',
+                    'tb_detailproduk.id_produk',
+                    '=',
+                    'tb_produk.id_produk'
+                )
+                ->where('tb_stokfranchise.id_franchise', $id_franchise)
+                ->whereColumn(
+                    'tb_stokfranchise.stok',
+                    '<',
+                    'tb_detailproduk.jumlah'
+                )
+                ->select('tb_produk.nama_produk')
+                ->distinct()
+                ->pluck('nama_produk')
+                ->toArray();
+
         }
 
 
-        return view('kasir.v_kasir', compact('kasir', 'riwayat', 'bestSellers'));
+        return view('kasir.v_kasir', compact('kasir', 'riwayat', 'bestSellers', 'produkMenipis', 'produkHabis'));
        
     }
     
@@ -859,7 +947,8 @@ public function laporan(Request $request)
                 'tb_bahanbaku.jenis_bahan',
                 'tb_bahanbaku.satuan'
                 )
-                ->get();
+            ->orderBy('tb_stokfranchise.stok', 'asc') 
+            ->get();
             $bahanbaku = DB::table('tb_bahanbaku')->get();
             return view('kasir.stokbahan', compact('stok', 'franchise', 'bahanbaku', 'type_akun'));
         }
